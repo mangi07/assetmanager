@@ -1,52 +1,59 @@
-from django.shortcuts import render
-
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 from assetmanager.models import Asset
 from assetmanager.serializers import AssetSerializer
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.http import Http404
 
-@csrf_exempt
-def asset_list(request):
+
+class AssetList(APIView):
     """
     List all assets, or create a new asset.
     """
-    if request.method == 'GET':
+    def get(self, request, format=None):
         assets = Asset.objects.all()
         serializer = AssetSerializer(assets, many=True)
-        return JsonResponse(serializer.data, safe=False)
-
-    elif request.method == 'POST':
+        return Response(serializer.data)
+    
+    def post(self, request, format=None):
+        if not request.body:
+            return Response("no data", status.HTTP_400_BAD_REQUEST)
         data = JSONParser().parse(request)
-        serializer = AssetSerializer(data=data)
+        serializer = AssetSerializer(data=data, many=True)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse(serializer.data, status=201)
-        return JsonResponse(serializer.errors, status=400)
-    
-@csrf_exempt
-def asset_detail(request, pk):
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+
+# TODO: test/refactor this
+class AssetDetail(APIView):
     """
     Retrieve, update or delete an asset.
     """
-    try:
-        asset = Asset.objects.get(pk=pk)
-    except Asset.DoesNotExist:
-        return HttpResponse(status=404)
-
-    if request.method == 'GET':
+    def get_object(self, pk):
+        try:
+            return Asset.objects.get(pk=pk)
+        except Asset.DoesNotExist:
+            raise Http404
+        
+    def get(self, request, pk, format=None):
+        asset = self.get_object(pk)
         serializer = AssetSerializer(asset)
-        return JsonResponse(serializer.data)
-
-    elif request.method == 'PUT':
+        return Response(serializer.data)
+        
+    def put(self, request, pk, format=None):
         data = JSONParser().parse(request)
+        asset = self.get_object(pk)
         serializer = AssetSerializer(asset, data=data)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse(serializer.data)
-        return JsonResponse(serializer.errors, status=400)
-
-    elif request.method == 'DELETE':
+            return Response(serializer.data)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk, format=None):
+        asset = self.get_object(pk)
         asset.delete()
-        return HttpResponse(status=204)
+        return Response(status.HTTP_204_NO_CONTENT)
+    
+    
