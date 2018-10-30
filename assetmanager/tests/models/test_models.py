@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from .models import Asset, Location, Count
+from ...models import Asset, Location, Count
 
 # Create your tests here.
 class AssetModelTests(TestCase):

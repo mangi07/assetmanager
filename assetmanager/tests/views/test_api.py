@@ -3,7 +3,7 @@ import json
 from django.test import TestCase, Client
 from django.urls import reverse
 from rest_framework import status
-from .models import Asset
+from ...models import Asset
 
 
 class AssetListTest(TestCase):
@@ -29,7 +29,7 @@ class AssetListTest(TestCase):
     def test_add_one_asset(self):
         payload = self.make_payload(1)
         response = self.client.post(
-                '/assets/',
+                reverse('asset-list'),
                 json.dumps(payload),
                 content_type="application/json"
             )
@@ -38,7 +38,7 @@ class AssetListTest(TestCase):
     def test_add_more_than_one_asset(self):
         payload = self.make_payload(2)
         response = self.client.post(
-                '/assets/',
+                reverse('asset-list'),
                 json.dumps(payload),
                 content_type="application/json"
             )
@@ -47,7 +47,7 @@ class AssetListTest(TestCase):
     def test_cannot_add_asset_with_payload_error(self):
         payload = ["blah blah"]
         response = self.client.post(
-                '/assets/',
+                reverse('asset-list'),
                 json.dumps(payload),
                 content_type="application/json"
             )
@@ -56,7 +56,7 @@ class AssetListTest(TestCase):
     def test_cannot_add_asset_with_empty_payload(self):
         payload = None
         response = self.client.post(
-                '/assets/',
+                reverse('asset-list'),
                 json.dumps(payload),
                 content_type="application/json"
             )

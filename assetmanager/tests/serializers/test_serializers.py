@@ -4,8 +4,8 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.parsers import JSONParser
 import io
 
-from .models import Asset, Location, Count
-from .serializers import AssetSerializer, LocationSerializer
+from ...models import Asset, Location, Count
+from ...serializers import AssetSerializer, LocationSerializer
 
 class AssetSerializerTest(TestCase):
     
