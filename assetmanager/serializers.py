@@ -6,10 +6,10 @@ from .models import Asset, Location, Count
 class AssetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Asset
-        fields = ('id', 'description')
+        fields = '__all__'
         
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
-        fields = ('id', 'description', 'assets')
+        fields = '__all__'
 

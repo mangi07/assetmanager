@@ -34,6 +34,7 @@ class AssetListTest(TestCase):
                 content_type="application/json"
             )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(json.loads(response.content)), 1)
         
     def test_add_more_than_one_asset(self):
         payload = self.make_payload(2)
@@ -43,6 +44,7 @@ class AssetListTest(TestCase):
                 content_type="application/json"
             )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(len(json.loads(response.content)), 2)
 
     def test_cannot_add_asset_with_payload_error(self):
         payload = ["blah blah"]
@@ -63,17 +65,14 @@ class AssetListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
-class GetAssetListTest(TestCase):
-    
-    
+class GetAssetListTest(TestCase): 
     def setUp(self):
         self.thing1 = Asset.objects.create(
             description='thing one')
         self.thing2 = Asset.objects.create(
             description='thing two')
         self.client = Client()
-
-    
+ 
 
     def test_asset_detail(self):
         response = self.client.get(
