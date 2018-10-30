@@ -15,9 +15,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from assetmanager import views
+from django.conf.urls import include as api_include
 
 urlpatterns = [
     path('', include('assetmanager.urls')),
+    path('api/', api_include('rest_framework.urls')), # use api/login to login
     path('admin/', admin.site.urls),
 ]
