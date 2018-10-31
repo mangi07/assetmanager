@@ -13,7 +13,7 @@ class AssetSerializerTest(TestCase):
         """
         We should be able to serialize an asset.
         """
-        asset = Asset(description="fake asset")
+        asset = Asset(description="fake asset", original_cost=9999999999.99)
         asset.save()
         serializer = AssetSerializer(asset)
         # print(serializer.data)
@@ -28,7 +28,7 @@ class AssetSerializerTest(TestCase):
         4. convert this data structure to Asset object instance
         """
         # 1
-        asset = Asset(description="fake asset")
+        asset = Asset(description="fake asset", original_cost=9999999999.99)
         asset.save()
         serializer = AssetSerializer(asset)
         asset = None

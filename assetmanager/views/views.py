@@ -5,14 +5,23 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
-from rest_framework import permissions
+#from rest_framework import permissions
+
+from rest_framework.decorators import api_view
+from rest_framework.reverse import reverse
+
+
+@api_view(['GET'])
+def api_root(request, format=None):
+    return Response({
+        'assets': reverse('asset-list', request=request, format=format),
+    })
 
 
 class AssetList(APIView):
     """
     List all assets, or create one or more new assets.
     """
-    permission_classes = (permissions.IsAuthenticated,)
     def get(self, request, format=None):
         assets = Asset.objects.all()
         serializer = AssetSerializer(assets, many=True)
@@ -30,5 +39,6 @@ class AssetList(APIView):
 
 
 class AssetDetail(generics.RetrieveUpdateDestroyAPIView):
+    #permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     queryset = Asset.objects.all()
     serializer_class = AssetSerializer

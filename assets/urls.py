@@ -19,6 +19,6 @@ from django.conf.urls import include as api_include
 
 urlpatterns = [
     path('', include('assetmanager.urls')),
-    path('api/', api_include('rest_framework.urls')), # use api/login to login
+    path('api/v1', api_include('rest_framework.urls')), # use api/v1/login to login
     path('admin/', admin.site.urls),
 ]

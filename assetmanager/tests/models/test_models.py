@@ -9,7 +9,7 @@ class AssetModelTests(TestCase):
         """
         An asset should be created with the given description.
         """
-        thing1 = Asset(description="thing1")
+        thing1 = Asset(description="thing1", original_cost=100)
         thing1.save()
         assets = Asset.objects.all()
         self.assertEqual(thing1.description, "thing1")
@@ -33,7 +33,7 @@ class CountModelTests(TestCase):
         """
         Count should represent how many of one asset are at given location.
         """
-        thing1 = Asset(description="thing1")
+        thing1 = Asset(description="thing1", original_cost=100)
         thing1.save()
         thing1 = None
         thing1 = Asset.objects.first()
