@@ -15,8 +15,12 @@ class AssetSerializerTest(TestCase):
         """
         asset = Asset(description="fake asset", original_cost=9999999999.99)
         asset.save()
+        loc1 = Location.objects.create(description='loc1')
+        loc2 = Location.objects.create(description='loc2')
+        Count.objects.create(asset=asset, location=loc1, count=25)
+        Count.objects.create(asset=asset, location=loc2, count=30)
         serializer = AssetSerializer(asset)
-        # print(serializer.data)
+        print(serializer.data)
         # example: {'id': 1, 'description': 'fake asset'}
         
     def test_asset_can_be_deserialized(self):
