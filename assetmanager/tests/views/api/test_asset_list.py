@@ -9,7 +9,7 @@ from ....models import Asset, Location, Count
 
 
 class AssetListTest(TestCase):
-    """Test APIView for listing and creating assets"""
+    """Test APIView for listing and creating assets in bulk"""
     def setUp(self):
         self.client = APIClient()
         self.user = User.objects.create_user(username='testuser',
@@ -17,16 +17,26 @@ class AssetListTest(TestCase):
                                          password='password')
         self.client.force_login(user=self.user)
         
+        self.loc1 = Location.objects.create(description='loc1')
+        self.loc2 = Location.objects.create(description='loc2')
+        
     def make_payload(self, count):
-        payload = [{"description":"thing "+str(c+1), "original_cost":0} 
+        payload = [{"description":"thing "+str(c+1), "original_cost":0,
+                    "locations":[
+                            {"location":self.loc1.description, "count":count},
+                            {"location":self.loc1.description, "count":count/2}
+                    ]}
                 for c in range(count)]
         return payload
         
     def test_asset_list(self):
-        Asset.objects.create(
+        asset1 = Asset.objects.create(
             description='thing one', original_cost=100)
-        Asset.objects.create(
+        asset2 = Asset.objects.create(
             description='thing two', original_cost=200)
+        Count.objects.create(asset=asset1, location=self.loc1, count=25)
+        Count.objects.create(asset=asset1, location=self.loc2, count=30)
+        Count.objects.create(asset=asset2, location=self.loc2, count=30)
         
         response = self.client.get(
             reverse('asset-list')

@@ -11,105 +11,83 @@ class AssetSerializerTest(TestCase):
     
     def test_asset_can_be_serialized(self):
         """
-        We should be able to serialize an asset.
+        We should be able to serialize an asset:
+            Create the expected dict representation.
         """
         asset = Asset(description="fake asset", original_cost=9999999999.99)
         asset.save()
-        loc1 = Location.objects.create(description='loc1')
-        loc2 = Location.objects.create(description='loc2')
-        Count.objects.create(asset=asset, location=loc1, count=25)
-        Count.objects.create(asset=asset, location=loc2, count=30)
+        
+        loc1 = Location(description='loc1')
+        loc1.save()
+        
+        loc2 = Location(description='loc2')
+        loc2.save()
+        
+        Count(asset=asset, location=loc1, count=25).save()
+        Count(asset=asset, location=loc2, count=30).save()
         serializer = AssetSerializer(asset)
-        print(serializer.data)
-        # example: {'id': 1, 'description': 'fake asset'}
+        
+        expected = {'id': 1, 
+            'description': 'fake asset', 
+            'original_cost': '9999999999.99',
+            'locations': 
+                [{'location':'loc1', 'count':25}, 
+                 {'location':'loc2', 'count':30}]}
+        
+        self.assertDictEqual(serializer.data, expected)
+        
         
     def test_asset_can_be_deserialized(self):
-        """
-        We should be able to deserialize an asset that has been correctly serialized:
-        1. serialize asset (convert to raw python data structure)
-        2. convert to json string
-        3. convert from json string back to raw python data structure
-        4. convert this data structure to Asset object instance
-        """
-        # 1
+        """Deserialize an asset that has been correctly serialized:"""
+        
+        """1. serialize asset (convert to raw python data structure)"""
         asset = Asset(description="fake asset", original_cost=9999999999.99)
         asset.save()
         serializer = AssetSerializer(asset)
         asset = None
         
-        # 2
+        """2. convert to json string"""
         content = JSONRenderer().render(serializer.data)
-        # print("content")
-        # print(content)
-        # b'{"id":1,"description":"fake asset"}'
         
-        # 3
+        """3. convert from json string back to raw python data structure"""
         stream = io.BytesIO(content)
         data = JSONParser().parse(stream)
-        # print("data")
-        # print(data)
-        # {'id': 1, 'description': 'fake asset'}
         serializer = AssetSerializer(data=data)
         serializer.is_valid()
-        # True
-        # print(repr(serializer))
-        # print(serializer.validated_data)
-        # OrderedDict([('description', 'fake asset')])
         
-        # 4
+        """4. convert this data structure to Asset object instance"""
         asset = serializer.save()
-        # print("asset")
-        # print(asset)
-        # fake asset
+
       
 class LocationSerializerTest(TestCase):
     
     def test_location_can_be_serialized(self):
-        """
-        We should be able to serialize a location.
-        """
+        """Serialize a location."""
         location = Location(description="fake location")
         location.save()
-        
         serializer = LocationSerializer(location)
-        # print(serializer.data)
-        # example: {'id': 1, 'description': 'fake location'}
+        self.assertDictEqual(serializer.data, 
+                             {'id': 1, 'description': 'fake location'})
         
     def test_location_can_be_deserialized(self):
-        """
-        We should be able to deserialize an asset that has been correctly serialized:
-        1. serialize asset (convert to raw python data structure)
-        2. convert to json string
-        3. convert from json string back to raw python data structure
-        4. convert this data structure to Asset object instance
-        """
-        # 1
+        """Deserialize a location that has been correctly serialized:"""
+        
+        """1. serialize location (convert to raw python data structure)"""
         location = Location(description="fake location")
         location.save()
         serializer = LocationSerializer(location)
         location = None
         
-        # 2
+        """2. convert to json string"""
         content = JSONRenderer().render(serializer.data)
-        # print("content")
-        # print(content)
-        # b'{"id":1,"description":"fake location"}'
         
-        # 3
+        """3. convert from json string back to raw python data structure"""
         stream = io.BytesIO(content)
         data = JSONParser().parse(stream)
-        # print("data")
-        # print(data)
-        # {'id': 1, 'description': 'fake location'}
         serializer = LocationSerializer(data=data)
         serializer.is_valid()
-        # True
-        # print("serializer.validated_data")
-        # print(serializer.validated_data)
-        # OrderedDict([('description', 'fake location')])
         
-        # 4
+        """4. convert this data structure to Location object instance"""
         location = serializer.save()
-        # print("location")
-        # print(location)
-        # fake location
+        
+        

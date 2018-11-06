@@ -28,9 +28,9 @@ class AssetList(APIView):
         return Response(serializer.data)
     
     def post(self, request, format=None):
-        if not request.body:
+        if not request.data:
             return Response("no data", status.HTTP_400_BAD_REQUEST)
-        data = JSONParser().parse(request)
+        data = request.data
         serializer = AssetSerializer(data=data, many=True)
         if serializer.is_valid():
             serializer.save()

@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 from ....models import Asset
 
+# TODO: some of these tests fail
 
 class GetAssetListTest(TestCase): 
     def setUp(self):
@@ -94,6 +95,7 @@ class GetAssetListTest(TestCase):
         
 
     def test_asset_detail_DELETE_succeeds(self):
+        # Make sure an asset's counts are deleted, too
         count1 = Asset.objects.count()
         self.client.delete(
                 reverse('asset-detail', kwargs={'pk': 2}),
