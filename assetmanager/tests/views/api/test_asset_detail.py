@@ -5,7 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
-from ....models import Asset
+from ....models import Asset, Location, Count
 
 # TODO: some of these tests fail
 
@@ -95,14 +95,30 @@ class GetAssetListTest(TestCase):
         
 
     def test_asset_detail_DELETE_succeeds(self):
-        # Make sure an asset's counts are deleted, too
-        count1 = Asset.objects.count()
+        asset = Asset.objects.get(pk=2)
+        loc1 = Location.objects.create(description='loc1')
+        loc2 = Location.objects.create(description='loc2')
+        Count.objects.create(asset=asset, location=loc1, count=25)
+        Count.objects.create(asset=asset, location=loc2, count=30)
+        
+        asset_count_before = Asset.objects.count()
+        location_count_before = Location.objects.count()
+        counts_before = Count.objects.count()
+        
         self.client.delete(
                 reverse('asset-detail', kwargs={'pk': 2}),
         )
-        count2 = Asset.objects.count()
-        self.assertEqual(count1, count2+1)
         
-    # TODO: refactor into separate methods the creation of payloads and db entries used in all tests??
+        asset_count_after = Asset.objects.count()
+        location_count_after = Location.objects.count()
+        counts_after = Count.objects.count()
+        
+        # expect one less asset
+        self.assertEqual(asset_count_before, asset_count_after+1)
+        # expect both counts deleted
+        self.assertEqual(counts_before, counts_after+2)
+        # expect both locations still exist
+        self.assertEqual(location_count_before, location_count_after)
+        
     # TODO: add JWT capability to API# -*- coding: utf-8 -*-
 

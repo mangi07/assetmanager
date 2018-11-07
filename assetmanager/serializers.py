@@ -9,6 +9,7 @@ class LocationSerializer(serializers.ModelSerializer):
         model = Location
         fields = '__all__'
 
+
 class LocationField(serializers.RelatedField):
     def to_representation(self, value):
         try:
@@ -33,13 +34,31 @@ class AssetSerializer(serializers.ModelSerializer):
         })
         return internal_value
 
-    def create(self, validated_data):
-        location_data = validated_data.pop('locations')
-        print(location_data)
-        asset = Asset.objects.create(**validated_data)
-        for location in location_data:
+    def save_locations(self, asset, locations):
+        for location in locations:
             description = location['location']
             count = location['count']
+            # TODO: return error to user if location does not exist (and test this)
+            
             loc = Location.objects.filter(description=description).first()
+            # TODO: use update if count exists (and test this)
+            
+            
             Count.objects.create(asset=asset, location=loc, count=count)
+            
+    def create(self, validated_data):
+        location_data = validated_data.pop('locations')
+        asset = Asset.objects.create(**validated_data)
+        self.save_locations(asset, location_data)
+        return asset
+    
+    def update(self, asset, validated_data):
+        if validated_data['locations']:
+            location_data = validated_data.pop('locations')
+            self.save_locations(asset, location_data)
+        asset.description = validated_data.get('description', asset.description)
+        asset.original_cost = validated_data.get('original_cost', asset.original_cost)
+        # TODO: is there a way to iterate through these mappings so 
+        # this does not have to be changed when the model expands
+        asset.save()
         return asset
