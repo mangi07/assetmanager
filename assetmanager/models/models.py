@@ -3,9 +3,10 @@ from django.db import models
 # TODO: Create view and url for CRUD on locations
 # TODO: Test CRUD, including the following: 
 #   should not create two locations with the same description,
-#   should not delete location if referred to (test if foreign key constraint is there)
+#   should not delete location if referred to by another model object 
+#       (test if foreign key constraint is there)
 class Location(models.Model):
-    description = models.CharField(max_length=200, unique=True)
+    description = models.CharField(max_length=200)
     
     def __str__(self):
         return self.description
@@ -27,4 +28,7 @@ class Count(models.Model):
     
     def __int__(self):
         return self.count
+    
+    class Meta:
+        unique_together = ('asset', 'location',)
     

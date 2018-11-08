@@ -23,8 +23,8 @@ class AssetListTest(TestCase):
     def make_payload(self, count):
         payload = [{"description":"thing "+str(c+1), "original_cost":0,
                     "locations":[
-                            {"location":self.loc1.description, "count":count},
-                            {"location":self.loc1.description, "count":count/2}
+                            {"location":self.loc1.description, "count":100},
+                            {"location":self.loc1.description, "count":0}
                     ]}
                 for c in range(count)]
         return payload
@@ -43,7 +43,7 @@ class AssetListTest(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-    # TODO: Test asset listing with pagination once it's added.
+    # TODO: Test asset listing with pagination and filtering once it's added.
         
     def test_add_one_asset(self):
         payload = self.make_payload(1)

@@ -1,0 +1,67 @@
+API resources:
+
+*****   
+api/v1/assets/
+
+GET:
+List all assets.  See structure in POST example, below.
+(TODO: add functionality for pagination and filters)
+
+
+POST:
+Create one or more new assets and (TODO) enforce asset tag uniqueness.
+For each asset, a location must exist before a count is added to it.
+**json:
+[
+    {"tag_id":"000000001" (TODO: add this field...and others eventually)
+     "description":"thing one", 
+     "original_cost":100.00,
+     "locations":[
+         {"location":"loc-1", "count":10},
+         {"location":"loc-2", "count":5}
+     ]
+    },
+    ...
+]
+**response status: 201
+**response:
+[
+    {"tag_id":"000000001"
+     "description":"thing one", 
+     "original_cost":100.00,
+     "locations":[
+         {"location":"loc-1", "count":10},
+         {"location":"loc-2", "count":5}
+     ]
+    },
+    ...
+]
+
+*****
+api/v1/assets/<id>/
+
+GET:
+PUT:
+PATCH:
+DELETE:
+
+
+*****(TODO)
+api/v1/locations/
+
+GET:
+POST:
+
+*****(TODO)
+api/v1/locations/<id>
+
+GET:
+PUT:
+PATCH:
+DELETE: foreign key constraint should disallow if there are assets at the location
+
+*****(TODO)
+api/v1/assets/<id>/locations/
+
+GET:
+POST:

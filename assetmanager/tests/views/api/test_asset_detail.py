@@ -7,7 +7,6 @@ from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 from ....models import Asset, Location, Count
 
-# TODO: some of these tests fail
 
 class GetAssetListTest(TestCase): 
     def setUp(self):
@@ -69,7 +68,7 @@ class GetAssetListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         updated_desc = Asset.objects.get(pk=2).description
         self.assertEqual(updated_desc, old_desc)
-        
+
      
     def test_asset_detail_PATCH_succeeds(self):
         # before PATCH
@@ -92,6 +91,44 @@ class GetAssetListTest(TestCase):
         
         db_desc = Asset.objects.get(pk=2).description
         self.assertEqual(db_desc, description)
+        
+    def test_asset_detail_PATCH_existing_location_succeeds(self):
+        # before PATCH
+        asset = Asset.objects.get(pk=2)
+        location = Location.objects.create(description='loc1')
+        count = Count.objects.create(asset=asset, location=location, count=5)
+        self.assertEqual(count.asset.description, 'thing two')
+        
+        payload = {'locations':[{'location':'loc1','count':10}]}
+        response = self.client.patch(
+                reverse('asset-detail', kwargs={'pk': 2}),
+                json.dumps(payload),
+                content_type="application/json"
+        )
+        
+        # after PATCH
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Count.objects.first().count, 10)
+        self.assertEqual(Count.objects.count(), 1)
+        
+    def test_asset_detail_PATCH_nonexisting_location_fails(self):
+        # before PATCH
+        asset = Asset.objects.get(pk=2)
+        location = Location.objects.create(description='real location')
+        count = Count.objects.create(asset=asset, location=location, count=5)
+        self.assertEqual(count.asset.description, 'thing two')
+        
+        payload = {'locations':[{'location':'fake location','count':10}]}
+        response = self.client.patch(
+                reverse('asset-detail', kwargs={'pk': 2}),
+                json.dumps(payload),
+                content_type="application/json"
+        )
+        
+        #print(response.content)
+        # after PATCH
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(Count.objects.first().count, 5)
         
 
     def test_asset_detail_DELETE_succeeds(self):
