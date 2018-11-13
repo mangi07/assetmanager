@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from rest_framework import serializers
-from .custom_api_exceptions import CountCreationException
+from .custom_api_exceptions import BadRequestException
 from .models import Asset, Location, Count
 
         
@@ -38,26 +38,39 @@ class AssetSerializer(serializers.ModelSerializer):
         })
         return internal_value
 
-
+    def find_unique_descs(self, descs):
+        while(len(descs) > 0):
+            desc = descs.pop()
+            if desc in descs:
+                return desc
+        return None
+        
     def save_locations(self, asset, locations):
         """A list of counts per location is given for the asset.
         If the there is already a count of the asset at a given location,
         it will be updated.  Otherwise, the given location count will
         be newly associated with the asset."""
         
+        # fail if duplicate locations are given
+        descs = [loc['location'] for loc in locations]
+        dup_descr = self.find_unique_descs(descs)
+        if dup_descr:
+            raise BadRequestException(
+                ("Duplicate locations given: '{}'".format(dup_descr))
+            )
+        
         for location in locations:
-            description = location['location']
+            descr = location['location']
             count = location['count']
             # this filter returns None if location description not found
-            loc = Location.objects.filter(description=description).first()
+            loc = Location.objects.filter(description=descr).first()
             if not loc:
-                raise CountCreationException(
-                        ("'" + description + "' location does not exist."  
+                raise BadRequestException(
+                        ("'{}' location does not exist."  
                          "  You need to first create the location before "
-                         "trying to add an asset count to it.")
+                         "trying to add an asset count to it.".format(descr))
                     )
                         
-            # TODO: need to enforce (asset, location) uniqueness in counts and test it
             # update count if it exists, otherwise create it
             location_count = Count.objects.filter(asset=asset, location=loc).first()
             if location_count:
@@ -67,11 +80,14 @@ class AssetSerializer(serializers.ModelSerializer):
             else:
                 Count.objects.create(asset=asset, location=loc, count=count)
             
-            
     def create(self, validated_data):
         location_data = validated_data.pop('locations')
         asset = Asset.objects.create(**validated_data)
-        self.save_locations(asset, location_data)
+        try:
+            self.save_locations(asset, location_data)
+        except BadRequestException:
+            asset.delete()
+            raise
         return asset
     
     
@@ -82,6 +98,6 @@ class AssetSerializer(serializers.ModelSerializer):
         asset.description = validated_data.get('description', asset.description)
         asset.original_cost = validated_data.get('original_cost', asset.original_cost)
         # TODO: is there a way to iterate through these mappings so 
-        # this does not have to be changed when the model expands
+        # this does not have to be changed when the model expands?
         asset.save()
         return asset

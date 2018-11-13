@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 from ....models import Asset, Location, Count
 
 
-class GetAssetListTest(TestCase): 
+class AssetDetailTest(TestCase): 
     def setUp(self):
         self.thing1 = Asset.objects.create(
             description='thing one', original_cost=100)
@@ -21,6 +21,15 @@ class GetAssetListTest(TestCase):
                                          password='password')
         self.client.force_login(user=self.user)
         
+    def make_payload(self):
+        payload = {"description":"thing", "original_cost":0,
+                    "locations":[
+                            {"location":self.loc1.description, "count":100},
+                            {"location":self.loc2.description, "count":0}
+                    ]}
+        return payload
+    
+        
 
     def test_asset_detail_GET_succeeds(self):
         response = self.client.get(
@@ -32,13 +41,38 @@ class GetAssetListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
     
-    def test_asset_detail_PUT_succeeds(self):
+    def test_asset_detail_PUT_succeeds_without_locations(self):
         # before PUT
         db_desc = Asset.objects.get(pk=2).description
         self.assertEqual(db_desc, 'thing two')
         
         description = 'thing one description has been changed'
         payload = {'description':description, 'original_cost':100}
+        response = self.client.put(
+                reverse('asset-detail', kwargs={'pk': 2}),
+                json.dumps(payload),
+                content_type="application/json"
+        )
+        
+        # after PUT
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        ret_desc = json.loads(response.content)['description']
+        self.assertEqual(ret_desc, description)
+        
+        db_desc = Asset.objects.get(pk=2).description
+        self.assertEqual(db_desc, description)
+
+    def test_asset_detail_PUT_succeeds_with_locations(self):
+        # before PUT
+        description = 'thing one description has been changed'
+        Location.objects.create(description='loc1')
+        Location.objects.create(description='loc2')
+        payload = {'description':description, 'original_cost':100}
+        payload['locations'] = [
+                            {"location":"loc1", "count":100},
+                            {"location":"loc2", "count":0}
+                    ]
         response = self.client.put(
                 reverse('asset-detail', kwargs={'pk': 2}),
                 json.dumps(payload),
@@ -152,7 +186,7 @@ class GetAssetListTest(TestCase):
         
         # expect one less asset
         self.assertEqual(asset_count_before, asset_count_after+1)
-        # expect both counts deleted
+        # expect both counts that are associated with the asset to be deleted
         self.assertEqual(counts_before, counts_after+2)
         # expect both locations still exist
         self.assertEqual(location_count_before, location_count_after)

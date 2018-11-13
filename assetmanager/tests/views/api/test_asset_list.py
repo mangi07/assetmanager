@@ -24,7 +24,7 @@ class AssetListTest(TestCase):
         payload = [{"description":"thing "+str(c+1), "original_cost":0,
                     "locations":[
                             {"location":self.loc1.description, "count":100},
-                            {"location":self.loc1.description, "count":0}
+                            {"location":self.loc2.description, "count":0}
                     ]}
                 for c in range(count)]
         return payload
@@ -83,5 +83,20 @@ class AssetListTest(TestCase):
             )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
-    # TODO: refactor into separate methods the creation of payloads and db entries used in all tests??
+    def test_cannot_add_asset_with_duplicate_locations(self):
+        prev_asset_count = Asset.objects.count()
+        payload = self.make_payload(1)
+        payload[0]['locations'] = [
+                            {"location":self.loc2.description, "count":100},
+                            {"location":self.loc2.description, "count":0}
+                    ]
+        response = self.client.post(
+                reverse('asset-list'),
+                json.dumps(payload),
+                content_type="application/json"
+            )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        new_asset_count = Asset.objects.count()
+        self.assertEqual(new_asset_count, prev_asset_count)
+       
     # TODO: add JWT capability to API

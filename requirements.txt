@@ -23,6 +23,17 @@ For each asset, a location must exist before a count is added to it.
     },
     ...
 ]
+**Example: The following should fail and give error msg, 
+because same location is given twice.
+[
+    {"description":"asset2", 
+     "original_cost":100.00,
+     "locations":[
+         {"location":"loc1", "count":10},
+         {"location":"loc1", "count":5}
+     ]
+    }
+]
 **response status: 201
 **response:
 [
