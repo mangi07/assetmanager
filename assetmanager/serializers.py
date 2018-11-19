@@ -4,6 +4,12 @@ from rest_framework import serializers
 from .custom_api_exceptions import BadRequestException
 from .models import Asset, Location, Count
 
+class LocationUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = '__all__'
+        
+    # TODO: inherite from LocationSerializer and override get_queryset
         
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:

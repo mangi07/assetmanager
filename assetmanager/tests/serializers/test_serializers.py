@@ -71,23 +71,37 @@ class LocationSerializerTest(TestCase):
         
     def test_location_can_be_deserialized(self):
         """Deserialize a location that has been correctly serialized:"""
-        
-        """1. serialize location (convert to raw python data structure)"""
-        location = Location(description="fake location")
-        location.save()
-        serializer = LocationSerializer(location)
-        location = None
-        
-        """2. convert to json string"""
-        content = JSONRenderer().render(serializer.data)
+        data = {'id': 1, 'description': 'fake location1'}
         
         """3. convert from json string back to raw python data structure"""
+        content = JSONRenderer().render(data)
         stream = io.BytesIO(content)
         data = JSONParser().parse(stream)
         serializer = LocationSerializer(data=data)
+        #print(serializer.initial_data)
         serializer.is_valid()
         
         """4. convert this data structure to Location object instance"""
         location = serializer.save()
         
+        self.assertEqual(location.description, 'fake location1')
         
+        
+    def test_location_descriptions_must_be_unique(self):
+        """Saving more than one location with the same name should fail."""
+        data = {'description': 'fake location'}
+        count = 0
+        try:
+            for i in range(100):
+                content = JSONRenderer().render(data)
+                stream = io.BytesIO(content)
+                data = JSONParser().parse(stream)
+                serializer = LocationSerializer(data=data)
+                serializer.is_valid()
+                serializer.save()
+                count += 1
+        except:
+            pass
+        
+        # if count is 1, means only the first save worked
+        self.assertEqual(count, 1)  

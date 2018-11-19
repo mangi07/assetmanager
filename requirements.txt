@@ -69,10 +69,5 @@ api/v1/locations/<id>
 GET:
 PUT:
 PATCH:
-DELETE: foreign key constraint should disallow if there are assets at the location
+DELETE: asset counts at the location will be deleted because of foreign key cascade
 
-*****(TODO)
-api/v1/assets/<id>/locations/
-
-GET:
-POST:
