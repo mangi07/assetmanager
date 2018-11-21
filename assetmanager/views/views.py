@@ -1,5 +1,5 @@
 from assetmanager.models import Asset, Location
-from assetmanager.serializers import AssetSerializer, LocationSerializer
+from assetmanager.serializers import AssetSerializer, LocationSerializer, LocationUpdateSerializer
 #from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -56,7 +56,7 @@ class LocationList(APIView):
     
     def post(self, request, format=None):
         if not request.data:
-            return Response("no data", status.HTTP_400_BAD_REQUEST)
+            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
         data = request.data
         serializer = LocationSerializer(data=data, many=True)
         if serializer.is_valid():
@@ -64,13 +64,15 @@ class LocationList(APIView):
             return Response(serializer.data, status.HTTP_201_CREATED)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
     
+    
     def patch(self, request, format=None):
         if not request.data:
-            return Response("no data", status.HTTP_400_BAD_REQUEST)
+            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+        
         data = request.data
-        serializer = LocationSerializer(data=data, many=True)
+        serializer = LocationUpdateSerializer(data=data, many=True)
+        
         if serializer.is_valid():
-            print(serializer.data())
             serializer.save()
             return Response(serializer.data, status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
