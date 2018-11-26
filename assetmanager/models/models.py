@@ -1,7 +1,6 @@
 from django.db import models
 
-# TODO: Create view and url for CRUD on locations
-# TODO: Test CRUD, including the following: 
+
 #   should not create two locations with the same description,
 #   if location is deleted, all counts with that location will also be deleted
 class Location(models.Model):

@@ -57,17 +57,12 @@ PATCH:
 DELETE:
 
 
-*****(TODO)
+*****
 api/v1/locations/
 
 GET:
 POST:
-
-*****(TODO)
-api/v1/locations/<id>
-
-GET:
-PUT:
 PATCH:
-DELETE: asset counts at the location will be deleted because of foreign key cascade
+DELETE: post an array of ids to delete
+Note: asset counts at these locations will also be deleted because of foreign key cascade
 

@@ -10,6 +10,11 @@ from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 
+import json
+
+# TODO: play around with https://github.com/miki725/django-rest-framework-bulk
+# and consider replacing some code with this
+
 
 @api_view(['GET'])
 def api_root(request, format=None):
@@ -77,4 +82,25 @@ class LocationList(APIView):
             return Response(serializer.data, status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
     
-    
+    def delete(self, request, format=None):
+        if not request.data:
+            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+        data = request.data
+        
+        # all given ids must exist and all or none of them should be deleted
+        locations = Location.objects.filter(pk__in=data)
+        if locations and len(locations) == len(data):
+            try:
+                locations.delete()
+            except:
+                return Response("Could not delete locations.",
+                                status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(data, status.HTTP_200_OK)
+        else:
+            return Response("One or more of the given location ids could not be found.",
+                           status.HTTP_400_BAD_REQUEST)
+             
+            
+            
+            
+        

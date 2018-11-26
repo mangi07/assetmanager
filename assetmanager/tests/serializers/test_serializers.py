@@ -79,7 +79,6 @@ class LocationSerializerTest(TestCase):
         stream = io.BytesIO(content)
         data = JSONParser().parse(stream)
         serializer = LocationSerializer(data=data)
-        #print(serializer.initial_data)
         serializer.is_valid()
         
         """4. convert this data structure to Location object instance"""
@@ -172,7 +171,7 @@ class LocationUpdateSerializerTest(TestCase):
         ser = LocationUpdateSerializer(data=data, many=True)
         # set locations on serializer equal to entries
         ser.locations = locations
-        # call method under test and assert return value is True
+        # call method under test and assert return value is False
         ret = ser.is_valid()
         self.assertFalse(ret)
         
@@ -213,6 +212,9 @@ class LocationUpdateSerializerTest(TestCase):
             self.assertEqual(loc.id, x)
             self.assertEqual(loc.description, descriptions[x-1])
             x += 1
+            
+        # No new locations should have been created.
+        self.assertEqual(x, 4)
     
         
         

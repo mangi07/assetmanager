@@ -50,7 +50,7 @@ class LocationUpdateSerializer:
         self.locations=None
         self.errors=""  
     
-    # test no data, test wrong json format, test jibberish text, test valid data
+    
     def validate_post_data(self):
         if not self.data:
             raise BadRequestException("Post data missing.")
@@ -60,8 +60,8 @@ class LocationUpdateSerializer:
                 str(loc['description'])
         except:
             raise BadRequestException("Post data format is incorrect.")
-        
-    # test returns True and returns False
+    
+    
     def is_valid(self):
         self.validate_post_data()
         id_list = [loc['id'] for loc in self.data]
@@ -69,10 +69,10 @@ class LocationUpdateSerializer:
         if locations and len(locations) == len(id_list):
             self.locations = locations
             return True
-        self.errors = "One or more locations were not found. No updates permormed."
+        self.errors = "One or more locations were not found. No updates performed."
         return False
     
-    # test no locations set, test valid data and locations bulk save correctly
+    
     @transaction.atomic
     def save(self):
         if not self.locations:
@@ -84,9 +84,6 @@ class LocationUpdateSerializer:
         for loc in self.locations:
             loc.description = new_locs[loc.id]
             loc.save()
-            # debug
-            print(new_locs[loc.id])
-            
 
 
 class LocationSerializer(serializers.ModelSerializer):

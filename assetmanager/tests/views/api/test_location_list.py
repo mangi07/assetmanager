@@ -65,41 +65,89 @@ class LocationListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(json.loads(response.content)), 2)
 
-"""
-    def test_cannot_add_asset_with_payload_error(self):
-        payload = ["blah blah"]
-        response = self.client.post(
-                reverse('asset-list'),
-                json.dumps(payload),
-                content_type="application/json"
-            )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_DELETE_cannot_delete_non_existent_location_1(self):
+        locs = Location.objects.all()
+        loc_ids = [loc.id for loc in locs]
         
-    def test_cannot_add_asset_with_empty_payload(self):
-        payload = None
-        response = self.client.post(
-                reverse('asset-list'),
-                json.dumps(payload),
-                content_type="application/json"
-            )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # make a non-existent id
+        id = sorted(loc_ids)[-1] + 1
         
-    def test_cannot_add_asset_with_duplicate_locations(self):
-        prev_asset_count = Asset.objects.count()
-        payload = self.make_payload(1)
-        payload[0]['locations'] = [
-                            {"location":self.loc2.description, "count":100},
-                            {"location":self.loc2.description, "count":0}
-                    ]
-        response = self.client.post(
-                reverse('asset-list'),
+        prev_count = Location.objects.count()
+        
+        response = self.client.delete(
+                reverse('location-list'),
+                json.dumps([id]),
+                content_type="application/json"
+            )
+        
+        new_count = Location.objects.count()
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(prev_count, new_count)
+        
+        
+    def test_DELETE_cannot_delete_non_existent_location_2(self):
+        """no locations should be deleted when at least one id does not exist"""
+        locs = Location.objects.all()
+        loc_ids = [loc.id for loc in locs]
+        
+        # make a non-existent id
+        id = sorted(loc_ids)[-1] + 1
+        # replace an existing id with non-existing id
+        loc_ids[-1] = id
+        
+        prev_count = Location.objects.count()
+        
+        response = self.client.delete(
+                reverse('location-list'),
+                json.dumps(loc_ids),
+                content_type="application/json"
+            )
+        
+        new_count = Location.objects.count()
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(prev_count, new_count)
+        
+    
+    def test_DELETE_one_location(self):
+        """should be able to delete one location given its id"""
+        locs = Location.objects.all()
+        loc_ids = [loc.id for loc in locs]
+        payload = [loc_ids[0]]
+        
+        prev_count = Location.objects.count()
+        
+        response = self.client.delete(
+                reverse('location-list'),
                 json.dumps(payload),
                 content_type="application/json"
             )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        new_asset_count = Asset.objects.count()
-        self.assertEqual(new_asset_count, prev_asset_count)
-"""
-       
-    # TODO: add JWT capability to API# -*- coding: utf-8 -*-
+        
+        new_count = Location.objects.count()
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(prev_count, new_count+1)
+        
+    def test_DELETE_two_locations(self):
+        """should be able to delete both locations given their ids"""
+        locs = Location.objects.all()
+        loc_ids = [loc.id for loc in locs]
+        
+        prev_count = Location.objects.count()
+        
+        response = self.client.delete(
+                reverse('location-list'),
+                json.dumps(loc_ids),
+                content_type="application/json"
+            )
+        
+        new_count = Location.objects.count()
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(prev_count, 2)
+        self.assertEqual(new_count, 0)
+        
+# TODO: add JWT capability to API
 
