@@ -149,5 +149,6 @@ class LocationListTest(TestCase):
         self.assertEqual(prev_count, 2)
         self.assertEqual(new_count, 0)
         
+        
 # TODO: add JWT capability to API
 

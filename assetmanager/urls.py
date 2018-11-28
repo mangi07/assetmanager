@@ -4,7 +4,7 @@ from assetmanager import views
 
 from rest_framework.urlpatterns import format_suffix_patterns
 
-api_root_path = 'api/vi/'
+api_root_path = 'api/v1/'
 
 urlpatterns = [
     path('', views.api_root), # TODO: change this once home page is created

@@ -10,6 +10,9 @@ from rest_framework import generics
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
 
+#from django_filters.rest_framework import DjangoFilterBackend
+from ..filters import LocationFilter
+
 import json
 
 # TODO: play around with https://github.com/miki725/django-rest-framework-bulk
@@ -55,8 +58,11 @@ class LocationList(APIView):
     Bulk CRUD on locations
     """
     def get(self, request, format=None):
+        params = self.request.query_params # returns {"param1":"val1",...}
         locations = Location.objects.all()
-        serializer = LocationSerializer(locations, many=True)
+        locations_filter = LocationFilter(locations, params)
+        serializer = LocationSerializer(locations_filter.qs(), many=True)
+        #serializer = LocationSerializer(locations, many=True)
         return Response(serializer.data)
     
     def post(self, request, format=None):
