@@ -61,6 +61,12 @@ DELETE:
 api/v1/locations/
 
 GET:
+    Filtering examples (query parameters can be mixed and matched, but "detail" error message will be returned if one or more query parameters cannot be understood - ie: typo in key, empty list returned if query okay but no results found):
+    import requests
+    requests.get('http://localhost:8000/api/v1/locations?description=something', auth=('admin', 'password'))
+    requests.get('http://localhost:8000/api/v1/locations?description_like=thing', auth=('admin', 'password'))
+    requests.get('http://localhost:8000/api/v1/locations?id=12', auth=('admin', 'password'))
+    
 POST:
 PATCH:
 DELETE: post an array of ids to delete
