@@ -26,7 +26,7 @@ SECRET_KEY = '14um-ykh4pa91i$vn$b-bumjxhl^re5k*4m-xm9-(6nv%akhx_'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['mangi07.pythonanywhere.com']
 
 
 # Application definition
@@ -121,7 +121,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
 STATIC_URL = '/static/'
-
+STATIC_ROOT = '/home/mangi07/assetmanager/static/'
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
