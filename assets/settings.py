@@ -26,7 +26,7 @@ SECRET_KEY = '14um-ykh4pa91i$vn$b-bumjxhl^re5k*4m-xm9-(6nv%akhx_'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['mangi07.pythonanywhere.com']
+ALLOWED_HOSTS = ['mangi07.pythonanywhere.com', 'localhost']
 
 
 # Application definition
@@ -139,4 +139,6 @@ REST_FRAMEWORK = {
             'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.CursorPagination',
+    'PAGE_SIZE': 5
 }

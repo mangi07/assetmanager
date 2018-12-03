@@ -6,6 +6,8 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 from ....models import Location
+from jsonschema import validate
+from ...schemas.utils import load_json_schema
 
 
 class LocationListTest(TestCase):
@@ -29,18 +31,10 @@ class LocationListTest(TestCase):
             reverse('location-list')
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        expected_json = """[
-            {
-                "id": 1,
-                "description": "loc1"
-            },
-            {
-                "id": 2,
-                "description": "loc2"
-             }
-        ]"""
-        actual_json = response.content.decode('utf8').replace("'", '"')
-        self.assertEqual(json.loads(actual_json), json.loads(expected_json))
+        actual_json_str = response.content.decode('utf8').replace("'", '"')
+        actual_json = json.loads(actual_json_str)
+        json_schema = load_json_schema("location_list.json")
+        validate(actual_json, json_schema)
         
     # TODO: Test location listing with pagination and filtering once it's added.
 

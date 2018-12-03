@@ -22,6 +22,8 @@ class LocationFilter:
             return queryset.filter(description=value)
         elif key == "description_like":  # leaning towards sql syntax LIKE
             return queryset.filter(description__contains=value)
+        elif key == "cursor":
+            return queryset # Allow for pagination
         else:
             raise BadRequestException("Could not use one or more provided filters.")
         

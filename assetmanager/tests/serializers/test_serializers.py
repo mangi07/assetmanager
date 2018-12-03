@@ -7,6 +7,7 @@ import io
 from ...models import Asset, Location, Count
 from ...serializers import AssetSerializer, LocationSerializer, LocationUpdateSerializer
 from ...custom_api_exceptions import BadRequestException
+from ..schemas.utils import load_json_schema
 
 class AssetSerializerTest(TestCase):
     

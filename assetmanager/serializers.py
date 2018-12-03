@@ -109,7 +109,7 @@ class AssetSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Asset
-        fields = ('id', 'description','original_cost','locations')
+        fields = ('id', 'description','original_cost','locations','created')
     
     
     def to_internal_value(self, data):
@@ -120,7 +120,7 @@ class AssetSerializer(serializers.ModelSerializer):
         })
         return internal_value
 
-    def find_unique_descs(self, descs):
+    def find_duplicate_descs(self, descs):
         while(len(descs) > 0):
             desc = descs.pop()
             if desc in descs:
@@ -135,7 +135,7 @@ class AssetSerializer(serializers.ModelSerializer):
         
         # fail if duplicate locations are given
         descs = [loc['location'] for loc in locations]
-        dup_descr = self.find_unique_descs(descs)
+        dup_descr = self.find_duplicate_descs(descs)
         if dup_descr:
             raise BadRequestException(
                 ("Duplicate locations given: '{}'".format(dup_descr))
