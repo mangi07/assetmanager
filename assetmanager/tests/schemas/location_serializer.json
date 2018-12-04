@@ -1,0 +1,11 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Expected paginated results for locations API endpoint.",
+    "required": [ "id", "description", "created" ],
+    "type": "object",
+    "properties": {
+        "id": {"type": "number"},
+        "description": {"type": "string"},
+        "created": {"type": "string", "format": "date-time"}
+    }
+}

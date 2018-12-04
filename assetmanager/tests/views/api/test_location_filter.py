@@ -24,7 +24,8 @@ class LocationFilterTestAPI(TestCase):
             reverse('location-list'), {'description':'nonexistent'}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual([], json.loads(response.content))
+        results = json.loads(response.content)['results']
+        self.assertEqual([], results)
         
     def test_location_filter_returns_one(self):
         """should return the only match for the filter"""
@@ -37,8 +38,13 @@ class LocationFilterTestAPI(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         obj = json.loads(response.content)
-        self.assertEqual(len(obj), 1)
-        self.assertListEqual([{"id":2,"description":"two"}], obj)
+        results = obj['results']
+        self.assertEqual(len(results), 1)
+        
+        id = results[0]['id']
+        descr = results[0]['description']
+        self.assertEqual(id, 2)
+        self.assertEqual(descr, "two")
         
     def test_location_filter_returns_multiple_matches(self):
         """should return the only match for the filter"""
@@ -52,8 +58,9 @@ class LocationFilterTestAPI(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         obj = json.loads(response.content)
-        self.assertEqual(len(obj), 4)
-        for loc in obj:
+        results = obj['results']
+        self.assertEqual(len(results), 4)
+        for loc in results:
             self.assertIn("fish", loc["description"])
         
         response = self.client.get(
@@ -61,8 +68,9 @@ class LocationFilterTestAPI(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         obj = json.loads(response.content)
-        self.assertEqual(len(obj), 2)
-        for loc in obj:
+        results = obj['results']
+        self.assertEqual(len(results), 2)
+        for loc in results:
             self.assertIn("red", loc["description"])
             
     
@@ -77,4 +85,5 @@ class LocationFilterTestAPI(TestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         obj = json.loads(response.content)
-        self.assertEqual(len(obj), 0)
+        results = obj['results']
+        self.assertEqual(len(results), 0)

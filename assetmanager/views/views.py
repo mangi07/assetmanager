@@ -65,6 +65,8 @@ class AssetList(PaginatorMixin, APIView):
     def get(self, request, format=None):
         assets = Asset.objects.all()
         serializer = AssetSerializer(assets, many=True)
+        # TODO: create filters for assets, then borrow code from
+        # lines 98 onward (pagination), then exploratory testing, then update asset_list.json and update tests
         return Response(serializer.data)
     
     def post(self, request, format=None):

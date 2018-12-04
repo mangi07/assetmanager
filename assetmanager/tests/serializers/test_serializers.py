@@ -7,7 +7,10 @@ import io
 from ...models import Asset, Location, Count
 from ...serializers import AssetSerializer, LocationSerializer, LocationUpdateSerializer
 from ...custom_api_exceptions import BadRequestException
+
+from jsonschema import validate
 from ..schemas.utils import load_json_schema
+
 
 class AssetSerializerTest(TestCase):
     
@@ -16,28 +19,16 @@ class AssetSerializerTest(TestCase):
         We should be able to serialize an asset:
             Create the expected dict representation.
         """
-        asset = Asset(description="fake asset", original_cost=9999999999.99)
-        asset.save()
+        asset = Asset.objects.create(
+                description="fake asset", original_cost=9999999999.99)
+        loc1 = Location.objects.create(description='loc1')
+        loc2 = Location.objects.create(description='loc2')
+        Count.objects.create(asset=asset, location=loc1, count=25)
+        Count.objects.create(asset=asset, location=loc2, count=30)
         
-        loc1 = Location(description='loc1')
-        loc1.save()
-        
-        loc2 = Location(description='loc2')
-        loc2.save()
-        
-        Count(asset=asset, location=loc1, count=25).save()
-        Count(asset=asset, location=loc2, count=30).save()
         serializer = AssetSerializer(asset)
-        
-        expected = {'id': 1, 
-            'description': 'fake asset', 
-            'original_cost': '9999999999.99',
-            'locations': 
-                [{'location':'loc1', 'count':25}, 
-                 {'location':'loc2', 'count':30}]}
-        
-        self.assertDictEqual(serializer.data, expected)
-        
+        json_schema = load_json_schema("asset_serializer.json")
+        validate(serializer.data, json_schema)
         
     def test_asset_can_be_deserialized(self):
         """Deserialize an asset that has been correctly serialized:"""
@@ -65,11 +56,13 @@ class LocationSerializerTest(TestCase):
     
     def test_location_can_be_serialized(self):
         """Serialize a location."""
-        location = Location(description="fake location")
-        location.save()
+        location = Location.objects.create(description="fake location")
         serializer = LocationSerializer(location)
-        self.assertDictEqual(serializer.data, 
-                             {'id': 1, 'description': 'fake location'})
+        #self.assertDictEqual(serializer.data, 
+        #                     {'id': 1, 'description': 'fake location'})
+        
+        json_schema = load_json_schema("location_serializer.json")
+        validate(serializer.data, json_schema)
         
     def test_location_can_be_deserialized(self):
         """Deserialize a location that has been correctly serialized:"""
