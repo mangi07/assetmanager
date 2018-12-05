@@ -13,8 +13,7 @@ from rest_framework.settings import api_settings
 
 #from django_filters.rest_framework import DjangoFilterBackend
 from ..filters import LocationFilter
-
-import json
+from .custom_paginator import CustomPaginator
 
 # TODO: play around with https://github.com/miki725/django-rest-framework-bulk
 # and consider replacing some code with this
@@ -26,39 +25,9 @@ def api_root(request, format=None):
         'assets': reverse('asset-list', request=request, format=format),
         'locations': reverse('location-list', request=request, format=format),
     })
-
-class PaginatorMixin():
-    # borrowed from https://stackoverflow.com/questions/35830779/django-rest-framework-apiview-pagination
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    @property
-    def paginator(self):
-        """
-        The paginator instance associated with the view, or `None`.
-        """
-        if not hasattr(self, '_paginator'):
-            if self.pagination_class is None:
-                self._paginator = None
-            else:
-                self._paginator = self.pagination_class()
-        return self._paginator
-    
-    def paginate_queryset(self, queryset):
-         """
-         Return a single page of results, or `None` if pagination is disabled.
-         """
-         if self.paginator is None:
-             return None
-         return self.paginator.paginate_queryset(queryset, self.request, view=self)
-     
-    def get_paginated_response(self, data):
-         """
-         Return a paginated style `Response` object for the given output data.
-         """
-         assert self.paginator is not None
-         return self.paginator.get_paginated_response(data)
     
     
-class AssetList(PaginatorMixin, APIView):
+class AssetList(APIView):
     """
     List all assets, or create one or more new assets.
     """
@@ -86,21 +55,19 @@ class AssetDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AssetSerializer
     
 
-class LocationList(PaginatorMixin, APIView):
+class LocationList(CustomPaginator, APIView):
     """
     Bulk CRUD on locations
     """
     def get(self, request, format=None):
         params = self.request.query_params # returns {"param1":"val1",...}
         locations = Location.objects.all()
-        locations_filter = LocationFilter(locations, params)
-        
-        page = self.paginate_queryset(locations_filter.qs()) # from PaginatorMixin
-        if page is not None:
-            serializer = LocationSerializer(page, many=True)
-            return self.get_paginated_response(serializer.data) # from PaginatorMixin
-        
-        return Response(serializer.data)
+        loc_filter = LocationFilter(locations, params)
+        paginated_data = self.get_paginated_response(LocationSerializer, loc_filter.qs())
+        if paginated_data:
+            return paginated_data
+        data = LocationSerializer(loc_filter.qs()).data
+        return Response(data, many=True)
     
     def post(self, request, format=None):
         if not request.data:
