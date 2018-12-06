@@ -12,7 +12,7 @@ from rest_framework.reverse import reverse
 from rest_framework.settings import api_settings
 
 #from django_filters.rest_framework import DjangoFilterBackend
-from ..filters import LocationFilter
+from ..filters import LocationFilter, AssetFilter
 from .custom_paginator import CustomPaginator
 
 # TODO: play around with https://github.com/miki725/django-rest-framework-bulk
@@ -27,16 +27,24 @@ def api_root(request, format=None):
     })
     
     
-class AssetList(APIView):
+class AssetList(CustomPaginator, APIView):
     """
     List all assets, or create one or more new assets.
     """
     def get(self, request, format=None):
+        params = self.request.query_params # returns {"param1":"val1",...}
         assets = Asset.objects.all()
-        serializer = AssetSerializer(assets, many=True)
-        # TODO: create filters for assets, then borrow code from
-        # lines 98 onward (pagination), then exploratory testing, then update asset_list.json and update tests
-        return Response(serializer.data)
+        asset_filter = AssetFilter(assets, params)
+        paginated_data = self.get_paginated_response(AssetSerializer, asset_filter.qs())
+        if paginated_data:
+            return paginated_data
+        data = AssetSerializer(asset_filter.qs()).data
+        return Response(data, many=True)
+        
+        # TODO: refactor commonalities out of get methods for assets and locations
+        # TODO: JWT instead of basic authentication
+        # TODO: permissions based on user type
+        # TODO: add necessary fields to asset model and then migrate and test
     
     def post(self, request, format=None):
         if not request.data:

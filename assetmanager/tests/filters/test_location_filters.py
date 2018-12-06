@@ -74,7 +74,7 @@ class LocationFilterTest(TestCase):
         for desc in descs:
             Location.objects.create(description=desc)
 
-        query_params = {"description_like":"House"}
+        query_params = {"description__like":"House"}
         locations = Location.objects.all()
         locations_filter = LocationFilter(locations, query_params)
         filtered_queryset = locations_filter.qs()
@@ -82,7 +82,7 @@ class LocationFilterTest(TestCase):
         for loc in filtered_queryset:
             self.assertIn("House", loc.description)
             
-        query_params = {"description_like":"201"}
+        query_params = {"description__like":"201"}
         locations_filter = LocationFilter(locations, query_params)
         filtered_queryset = locations_filter.qs()
         self.assertEqual(len(filtered_queryset), 2)

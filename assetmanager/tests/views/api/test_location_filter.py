@@ -8,7 +8,7 @@ from ....models import Location
 
 
 class LocationFilterTestAPI(TestCase):
-    """Test APIView for listing and creating assets in bulk"""
+    """Test APIView for filtering location list returned by GET"""
 
     def setUp(self):
         self.client = APIClient()
@@ -47,14 +47,14 @@ class LocationFilterTestAPI(TestCase):
         self.assertEqual(descr, "two")
         
     def test_location_filter_returns_multiple_matches(self):
-        """should return the only match for the filter"""
+        """should return more than one match for the filter"""
         Location.objects.create(description="one fish")
         Location.objects.create(description="two fish")
         Location.objects.create(description="red fish")
         Location.objects.create(description="another red fish")
         
         response = self.client.get(
-            reverse('location-list'), {'description_like':'fish'}
+            reverse('location-list'), {'description__like':'fish'}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         obj = json.loads(response.content)
@@ -64,7 +64,7 @@ class LocationFilterTestAPI(TestCase):
             self.assertIn("fish", loc["description"])
         
         response = self.client.get(
-            reverse('location-list'), {'description_like':'red'}
+            reverse('location-list'), {'description__like':'red'}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         obj = json.loads(response.content)
@@ -80,7 +80,7 @@ class LocationFilterTestAPI(TestCase):
         Location.objects.create(description="two fish")
         
         response = self.client.get(
-            reverse('location-list'), {'description_like':None}
+            reverse('location-list'), {'description__like':None}
         )
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
