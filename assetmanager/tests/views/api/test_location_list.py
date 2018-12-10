@@ -49,7 +49,7 @@ class LocationListTest(TestCase):
         self.assertEqual(len(json.loads(response.content)), 1)
 
 
-    def test_add_more_than_one_asset(self):
+    def test_add_more_than_one_location(self):
         payload = self.make_payload(2)
         response = self.client.post(
                 reverse('location-list'),
@@ -58,7 +58,21 @@ class LocationListTest(TestCase):
             )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(json.loads(response.content)), 2)
-
+               
+    def test_update_one_location(self):
+        assert self.loc1.id == 1
+        assert self.loc1.description == "loc1"
+        payload = [{"id":"1","description":"loc1 changed"}]
+        response = self.client.patch(
+                reverse('location-list'),
+                json.dumps(payload),
+                content_type="application/json"
+            )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json.loads(response.content)), 1)
+        loc1 = Location.objects.get(pk=1)
+        self.assertEqual(loc1.description, "loc1 changed")
+        
 
     def test_DELETE_cannot_delete_non_existent_location_1(self):
         locs = Location.objects.all()

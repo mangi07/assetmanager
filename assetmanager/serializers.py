@@ -4,63 +4,42 @@ from rest_framework import serializers
 from .custom_api_exceptions import BadRequestException
 from .models import Asset, Location, Count
 from django.db import transaction
-
-""" Can't seem to get bulk updates to work with serializers, for now.
-class LocationListSerializer(serializers.ListSerializer):
-    def update(self, instance, validated_data):
-        # Maps for id->instance and id->data item.
-        location_mapping = {location.id: location for location in instance}
-        data_mapping = {item['id']: item for item in validated_data}
-
-        # debug
-        print("yes, it got called")
-
-        # Perform updates.
-        ret = []
-        for location_id, data in data_mapping.items():
-            location = location_mapping.get(location_id, None)
-            if location is None:
-                raise BadRequestException(
-                    ("'{}' location does not exist."  
-                     "  You need to first create the location before "
-                     "trying to update it.".format(location.description))
-                )
-            else:
-                ret.append(self.child.update(location, data))
-
-        return ret
-
-class LocationUpdateSerializer(serializers.Serializer):
-    # We need to identify elements in the list using their primary key,
-    # so use a writable field here, rather than the default which would be read-only.
-    id = serializers.IntegerField()
-    
-    class Meta:
-        list_serializer_class = LocationListSerializer
-        #model = Location
-        #fields = '__all__'
-"""
+from abc import ABC, abstractmethod
 
 
 # TODO: play with api to further test this class can be used as expected
-class LocationUpdateSerializer:
-    def __init__(self, data=None, many=False):
+class CustomUpdateSerializer(ABC):
+    @abstractmethod
+    def _validate_post_data(self):
+        """should raise an exception if data is invalid"""
+        # may want to validate differently depending on
+        # whether this serializer is called by a post or a patch
+        pass
+    
+    @abstractmethod
+    def _assign_item_fields(self, loc, update_locs, id):
+        pass
+    
+    def __init__(self, serializer, data=None, many=False):
         self.data=data
         self.many=many
         self.locations=None
-        self.errors=""  
-    
+        self.errors=""
+        self.Serializer = serializer
     
     def validate_post_data(self):
         if not self.data:
             raise BadRequestException("Post data missing.")
         try:
-            for loc in self.data:
-                int(loc['id'])
-                str(loc['description'])
+            # each item of data list should have a proper key 'id'
+            assert type(self.data) == list
+            for d in self.data:
+                assert "id" in d
+                int(d["id"])
+            # custom validations in child class
+            self._validate_post_data()
         except:
             raise BadRequestException("Post data format is incorrect.")
-    
     
     def is_valid(self):
         self.validate_post_data()
@@ -69,28 +48,43 @@ class LocationUpdateSerializer:
         if locations and len(locations) == len(id_list):
             self.locations = locations
             return True
-        self.errors = "One or more locations were not found. No updates performed."
+        self.errors = "One or more items were not found. No updates performed."
         return False
-    
     
     @transaction.atomic
     def save(self):
         if not self.locations:
             raise RuntimeError("save called before is_valid")
         # make dictionary out of data
-        new_locs = {}
+        update_locs = {}
         for d in self.data:
-            new_locs[int(d['id'])] = d['description']
+             update_locs[int(d['id'])] = d
         for loc in self.locations:
-            loc.description = new_locs[loc.id]
+            update_loc = update_locs[loc.id]
+            self._assign_item_fields(loc, update_loc)
             loc.save()
+        self.data = self.Serializer(self.data, many=True).data
 
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
-        #list_serializer_class = LocationListSerializer
         model = Location
         fields = '__all__'
+        
+        
+class LocationUpdateSerializer(CustomUpdateSerializer):
+    """updates a list of locations"""
+    def __init__(self, data=None, many=False):
+        super().__init__(LocationSerializer, data, many)
+        
+    def _validate_post_data(self):
+        """should raise an exception if data is invalid"""
+        for loc in self.data:
+             int(loc['id'])
+             str(loc['description'])
+    
+    def _assign_item_fields(self, loc, update_loc):
+            loc.description = update_loc['description']
     
     
 class LocationField(serializers.RelatedField):
@@ -148,7 +142,7 @@ class AssetSerializer(serializers.ModelSerializer):
             loc = Location.objects.filter(description=descr).first()
             if not loc:
                 raise BadRequestException(
-                        ("'{}' location does not exist."  
+                        ("'{}' location does not exist."
                          "  You need to first create the location before "
                          "trying to add an asset count to it.".format(descr))
                     )
@@ -179,7 +173,7 @@ class AssetSerializer(serializers.ModelSerializer):
             self.save_locations(asset, location_data)
         asset.description = validated_data.get('description', asset.description)
         asset.original_cost = validated_data.get('original_cost', asset.original_cost)
-        # TODO: is there a way to iterate through these mappings so 
+        # TODO: is there a way to iterate through these mappings so
         # this does not have to be changed when the model expands?
         asset.save()
         return asset

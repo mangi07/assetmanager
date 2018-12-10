@@ -1,5 +1,7 @@
 from assetmanager.models import Asset, Location
-from assetmanager.serializers import AssetSerializer, LocationSerializer, LocationUpdateSerializer
+from assetmanager.serializers import (AssetSerializer,
+    LocationSerializer,
+    LocationUpdateSerializer)
 #from rest_framework.parsers import JSONParser
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -26,7 +28,71 @@ def api_root(request, format=None):
         'locations': reverse('location-list', request=request, format=format),
     })
     
+class CustomBulkAPIView(CustomPaginator, APIView):
+    """
+    Bulk CRUD on locations
+    """
+    def __init__(self, Item, ItemFilter, Serializer, UpdateSerializer):
+        self.Item = Item # must be a django Model
+        self.ItemFilter = ItemFilter # must be a BaseFilter from filters.py
+        self.Serializer = Serializer # must be a django ModelSerializer
+        self.UpdateSerializer = UpdateSerializer # must be a custom UpdateSerializer from serializers.py
     
+    
+    def get(self, request, format=None):
+        params = self.request.query_params # returns {"param1":"val1",...}
+        items = self.Item.objects.all()
+        item_filter = self.ItemFilter(items, params)
+        paginated_data = self.get_paginated_response(self.Serializer, item_filter.qs())
+        if paginated_data:
+            return paginated_data
+        data = self.Serializer(item_filter.qs()).data
+        return Response(data, many=True)
+    
+    
+    def post(self, request, format=None):
+        if not request.data:
+            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+        data = request.data
+        serializer = self.Serializer(data=data, many=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_201_CREATED)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+    
+    
+    def patch(self, request, format=None):
+        if not request.data:
+            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+        
+        data = request.data
+        serializer = self.UpdateSerializer(data=data, many=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status.HTTP_200_OK)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+    
+    
+    def delete(self, request, format=None):
+        if not request.data:
+            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+        data = request.data
+        
+        # all given ids must exist and all or none of them should be deleted
+        items = self.Item.objects.filter(pk__in=data)
+        if items and len(items) == len(data):
+            try:
+                items.delete()
+            except:
+                return Response("Could not delete items.",
+                                status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(data, status.HTTP_200_OK)
+        else:
+            return Response("One or more of the given item ids could not be found.",
+                           status.HTTP_400_BAD_REQUEST)
+
+
 class AssetList(CustomPaginator, APIView):
     """
     List all assets, or create one or more new assets.
@@ -48,7 +114,7 @@ class AssetList(CustomPaginator, APIView):
     
     def post(self, request, format=None):
         if not request.data:
-            return Response("no data", status.HTTP_400_BAD_REQUEST)
+            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
         data = request.data
         serializer = AssetSerializer(data=data, many=True)
         if serializer.is_valid():
@@ -63,61 +129,14 @@ class AssetDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AssetSerializer
     
 
-class LocationList(CustomPaginator, APIView):
-    """
-    Bulk CRUD on locations
-    """
-    def get(self, request, format=None):
-        params = self.request.query_params # returns {"param1":"val1",...}
-        locations = Location.objects.all()
-        loc_filter = LocationFilter(locations, params)
-        paginated_data = self.get_paginated_response(LocationSerializer, loc_filter.qs())
-        if paginated_data:
-            return paginated_data
-        data = LocationSerializer(loc_filter.qs()).data
-        return Response(data, many=True)
-    
-    def post(self, request, format=None):
-        if not request.data:
-            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
-        data = request.data
-        serializer = LocationSerializer(data=data, many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status.HTTP_201_CREATED)
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-    
-    
-    def patch(self, request, format=None):
-        if not request.data:
-            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
-        
-        data = request.data
-        serializer = LocationUpdateSerializer(data=data, many=True)
-        
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status.HTTP_200_OK)
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-    
-    def delete(self, request, format=None):
-        if not request.data:
-            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
-        data = request.data
-        
-        # all given ids must exist and all or none of them should be deleted
-        locations = Location.objects.filter(pk__in=data)
-        if locations and len(locations) == len(data):
-            try:
-                locations.delete()
-            except:
-                return Response("Could not delete locations.",
-                                status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return Response(data, status.HTTP_200_OK)
-        else:
-            return Response("One or more of the given location ids could not be found.",
-                           status.HTTP_400_BAD_REQUEST)
-             
+class LocationList(CustomBulkAPIView):
+    def __init__(self):
+        super().__init__(Location,
+            LocationFilter,
+            LocationSerializer,
+            LocationUpdateSerializer)
+
+
             
             
             

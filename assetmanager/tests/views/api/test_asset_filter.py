@@ -164,8 +164,9 @@ class LocationFilterTestAPI(TestCase):
         obj = json.loads(response.content)
         results = obj['results']
         self.assertEqual(len(results), 2)
-        self.assertEqual(results[0]['description'], "one fish")
-        self.assertEqual(results[1]['description'], "blue fish")
+        descriptions = [r['description'] for r in results]
+        self.assertTrue("one fish" in descriptions)
+        self.assertTrue("blue fish" in descriptions)
         
         response = self.client.get(
             reverse('asset-list'), {'location':'loc2'}
