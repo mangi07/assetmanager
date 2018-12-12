@@ -1,5 +1,6 @@
 from assetmanager.models import Asset, Location
 from assetmanager.serializers import (AssetSerializer,
+    AssetUpdateSerializer,
     LocationSerializer,
     LocationUpdateSerializer)
 #from rest_framework.parsers import JSONParser
@@ -93,34 +94,46 @@ class CustomBulkAPIView(CustomPaginator, APIView):
                            status.HTTP_400_BAD_REQUEST)
 
 
-class AssetList(CustomPaginator, APIView):
-    """
-    List all assets, or create one or more new assets.
-    """
-    def get(self, request, format=None):
-        params = self.request.query_params # returns {"param1":"val1",...}
-        assets = Asset.objects.all()
-        asset_filter = AssetFilter(assets, params)
-        paginated_data = self.get_paginated_response(AssetSerializer, asset_filter.qs())
-        if paginated_data:
-            return paginated_data
-        data = AssetSerializer(asset_filter.qs()).data
-        return Response(data, many=True)
-        
-        # TODO: refactor commonalities out of get methods for assets and locations
-        # TODO: JWT instead of basic authentication
-        # TODO: permissions based on user type
-        # TODO: add necessary fields to asset model and then migrate and test
-    
-    def post(self, request, format=None):
-        if not request.data:
-            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
-        data = request.data
-        serializer = AssetSerializer(data=data, many=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status.HTTP_201_CREATED)
-        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+#class AssetList(CustomPaginator, APIView):
+#    """
+#    List all assets, or create one or more new assets.
+#    """
+#    def get(self, request, format=None):
+#        params = self.request.query_params # returns {"param1":"val1",...}
+#        assets = Asset.objects.all()
+#        asset_filter = AssetFilter(assets, params)
+#        paginated_data = self.get_paginated_response(AssetSerializer, asset_filter.qs())
+#        if paginated_data:
+#            return paginated_data
+#        data = AssetSerializer(asset_filter.qs()).data
+#        return Response(data, many=True)
+#        
+#        # TODO: refactor commonalities out of get methods for assets and locations
+#        # TODO: JWT instead of basic authentication
+#        # TODO: permissions based on user type
+#        # TODO: add necessary fields to asset model and then migrate and test
+#    
+#    def post(self, request, format=None):
+#        if not request.data:
+#            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+#        data = request.data
+#        serializer = AssetSerializer(data=data, many=True)
+#        if serializer.is_valid():
+#            serializer.save()
+#            return Response(serializer.data, status.HTTP_201_CREATED)
+#        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
+#    
+#    def patch(self, request, format=None):
+#        if not request.data:
+#            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+#        
+#        data = request.data
+#        serializer = AssetUpdateSerializer(data=data, many=True)
+#        
+#        if serializer.is_valid():
+#            serializer.save()
+#            return Response(serializer.data, status.HTTP_200_OK)
+#        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
 class AssetDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -136,6 +149,13 @@ class LocationList(CustomBulkAPIView):
             LocationSerializer,
             LocationUpdateSerializer)
 
+# TODO: test bulk update and bulk delete
+class AssetList(CustomBulkAPIView):
+    def __init__(self):
+        super().__init__(Asset,
+            AssetFilter,
+            AssetSerializer,
+            AssetUpdateSerializer)
 
             
             

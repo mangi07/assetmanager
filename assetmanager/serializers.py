@@ -5,10 +5,14 @@ from .custom_api_exceptions import BadRequestException
 from .models import Asset, Location, Count
 from django.db import transaction
 from abc import ABC, abstractmethod
+from .tests.schemas.utils import load_json_schema
+from jsonschema import validate
+from . import serializer_utils
 
 
 # TODO: play with api to further test this class can be used as expected
 class CustomUpdateSerializer(ABC):
+    """Handles a list of DB entries to be updated via either patch or put request"""
     @abstractmethod
     def _validate_post_data(self):
         """should raise an exception if data is invalid"""
@@ -18,14 +22,16 @@ class CustomUpdateSerializer(ABC):
     
     @abstractmethod
     def _assign_item_fields(self, loc, update_locs, id):
+        """should assign values from dict update_locs to corresponding properties of loc"""
         pass
     
-    def __init__(self, serializer, data=None, many=False):
+    def __init__(self, model, serializer, data=None, many=False):
         self.data=data
         self.many=many
-        self.locations=None
+        self.items=None
         self.errors=""
         self.Serializer = serializer
+        self.Model = model
     
     def validate_post_data(self):
         if not self.data:
@@ -43,27 +49,29 @@ class CustomUpdateSerializer(ABC):
     
     def is_valid(self):
         self.validate_post_data()
-        id_list = [loc['id'] for loc in self.data]
-        locations = Location.objects.filter(pk__in=id_list)
-        if locations and len(locations) == len(id_list):
-            self.locations = locations
+        id_list = [item['id'] for item in self.data]
+        items = self.Model.objects.filter(pk__in=id_list)
+        if items and len(items) == len(id_list):
+            self.items = items
             return True
         self.errors = "One or more items were not found. No updates performed."
         return False
     
     @transaction.atomic
     def save(self):
-        if not self.locations:
+        if not self.items:
             raise RuntimeError("save called before is_valid")
         # make dictionary out of data
-        update_locs = {}
+        update_items = {}
         for d in self.data:
-             update_locs[int(d['id'])] = d
-        for loc in self.locations:
-            update_loc = update_locs[loc.id]
-            self._assign_item_fields(loc, update_loc)
-            loc.save()
-        self.data = self.Serializer(self.data, many=True).data
+             update_items[int(d['id'])] = d
+        for item in self.items:
+            update_item = update_items[item.id]
+            self._assign_item_fields(item, update_item)
+            item.save()
+        id_list = list(update_items.keys())
+        items = self.Model.objects.filter(pk__in=id_list)
+        self.data = self.Serializer(items, many=True).data
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -75,7 +83,7 @@ class LocationSerializer(serializers.ModelSerializer):
 class LocationUpdateSerializer(CustomUpdateSerializer):
     """updates a list of locations"""
     def __init__(self, data=None, many=False):
-        super().__init__(LocationSerializer, data, many)
+        super().__init__(Location, LocationSerializer, data, many)
         
     def _validate_post_data(self):
         """should raise an exception if data is invalid"""
@@ -85,7 +93,7 @@ class LocationUpdateSerializer(CustomUpdateSerializer):
     
     def _assign_item_fields(self, loc, update_loc):
             loc.description = update_loc['description']
-    
+
     
 class LocationField(serializers.RelatedField):
     def to_representation(self, value):
@@ -160,6 +168,7 @@ class AssetSerializer(serializers.ModelSerializer):
         location_data = validated_data.pop('locations')
         asset = Asset.objects.create(**validated_data)
         try:
+            # TODO: refactor out this to use serializer_utils.save_asset_locations
             self.save_locations(asset, location_data)
         except BadRequestException:
             asset.delete()
@@ -168,6 +177,7 @@ class AssetSerializer(serializers.ModelSerializer):
     
     
     def update(self, asset, validated_data):
+        # TODO: refactor out this to use serializer_utils.update_asset
         if validated_data['locations']:
             location_data = validated_data.pop('locations')
             self.save_locations(asset, location_data)
@@ -177,3 +187,25 @@ class AssetSerializer(serializers.ModelSerializer):
         # this does not have to be changed when the model expands?
         asset.save()
         return asset
+
+class AssetUpdateSerializer(CustomUpdateSerializer):
+    """
+    updates a list of assets
+    if the requested location count for an asset exists, it will be updated
+    if the requested location count for an asset does NOT exists, it will be created for that asset
+    """
+    def __init__(self, data=None, many=False):
+        super().__init__(Asset, AssetSerializer, data, many)
+        
+    def _validate_post_data(self):
+        """should raise an exception if data is invalid"""
+        json_schema = load_json_schema("asset_patch.json")
+        validate(self.data, json_schema)
+    
+    def _assign_item_fields(self, asset, update_asset):
+        if 'locations' in update_asset:
+            location_data = update_asset.pop('locations')
+            serializer_utils.save_asset_locations(asset, location_data)
+        serializer_utils.assign_asset_fields(asset, update_asset)
+        
+            

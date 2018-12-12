@@ -1,0 +1,30 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Dec 11 16:53:47 2018
+
+@author: Ben.Olson
+"""
+[
+{
+    "id": 22,
+    "description": "asset6 modified again",
+    "original_cost": "1.00",
+    "locations": [
+        {
+            "location": "one modified",
+            "count": 1
+        }
+    ]
+},
+{
+    "id": 21,
+    "description": "asset5 modified",
+    "original_cost": "100.00",
+    "locations": [
+        {
+            "location": "one modified",
+            "count": 1
+        }
+    ]
+}
+]

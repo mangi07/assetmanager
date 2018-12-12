@@ -174,7 +174,7 @@ class LocationUpdateSerializerTest(TestCase):
         """RuntimeError should be raised when no locations are set on the serializer."""
         data = [{"id":1, "description":"some place 1"}]
         ser = LocationUpdateSerializer(data=data, many=True)
-        self.assertEqual(ser.locations, None)
+        self.assertEqual(ser.items, None)
         with self.assertRaises(RuntimeError):
             ser.save()
         
@@ -191,7 +191,7 @@ class LocationUpdateSerializerTest(TestCase):
                 {"id":3, "description":"updated place 3"}]
         
         ser = LocationUpdateSerializer(data=data, many=True)
-        ser.locations = locations
+        ser.items = locations
         
         ser.save()
         

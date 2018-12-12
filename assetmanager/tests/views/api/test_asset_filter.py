@@ -137,8 +137,10 @@ class LocationFilterTestAPI(TestCase):
         obj = json.loads(response.content)
         results = obj['results']
         self.assertEqual(len(results), 2)
-        self.assertEqual(results[0]['description'], "two fish")
-        self.assertEqual(results[1]['description'], "red fish")
+
+        descriptions = [r['description'] for r in results]
+        self.assertTrue("two fish" in descriptions)
+        self.assertTrue("red fish" in descriptions)
         
         
     def test_asset_filter_location(self):
@@ -175,9 +177,11 @@ class LocationFilterTestAPI(TestCase):
         obj = json.loads(response.content)
         results = obj['results']
         self.assertEqual(len(results), 3)
-        self.assertEqual(results[0]['description'], "one fish")
-        self.assertEqual(results[1]['description'], "two fish")
-        self.assertEqual(results[2]['description'], "red fish")
+        
+        descriptions = [r['description'] for r in results]
+        self.assertTrue("one fish" in descriptions)
+        self.assertTrue("two fish" in descriptions)
+        self.assertTrue("red fish" in descriptions)
         
 
     def test_asset_filter_location_and_greater_than(self):
