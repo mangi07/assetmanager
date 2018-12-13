@@ -3,11 +3,11 @@ from .models import Asset, Location, Count
 from django.db import transaction
 
 def find_duplicate_descs(descs):
-        while(len(descs) > 0):
-            desc = descs.pop()
-            if desc in descs:
-                return desc
-        return None
+    while(len(descs) > 0):
+        desc = descs.pop()
+        if desc in descs:
+            return desc
+    return None
 
 @transaction.atomic
 def save_asset_locations(asset, locations):

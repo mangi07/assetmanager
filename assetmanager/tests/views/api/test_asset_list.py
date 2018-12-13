@@ -134,7 +134,7 @@ class AssetListTest(TestCase):
         assert assets[0].description == "thing one"
         assert assets[0].original_cost == 100
         
-        payload = [{"id":1, "description":"thing one changed", 
+        payload = [{"id":1, "description":"thing one changed",
                     "original_cost":"99.95"}]
         response = self.client.patch(
                 reverse('asset-list'),
@@ -164,7 +164,7 @@ class AssetListTest(TestCase):
         Count.objects.create(asset=asset1, location=self.loc2, count=30)
         Count.objects.create(asset=asset2, location=self.loc2, count=30)
         
-        counts = Count.objects.filter(asset=2,location=2) # asset id  and location        
+        counts = Count.objects.filter(asset=2,location=2) # asset id  and location
         assert counts[0].count == 30
         
         payload = [{"id":2, "locations":[{"location":"loc2","count":31}]}]
@@ -193,9 +193,9 @@ class AssetListTest(TestCase):
         Count.objects.create(asset=asset1, location=self.loc2, count=30)
         Count.objects.create(asset=asset2, location=self.loc2, count=30)
         
-        counts = Count.objects.filter(asset=1,location=1) # asset id  and location        
+        counts = Count.objects.filter(asset=1,location=1) # asset id  and location
         assert counts[0].count == 25
-        counts = Count.objects.filter(asset=2,location=2) # asset id  and location        
+        counts = Count.objects.filter(asset=2,location=2) # asset id  and location
         assert counts[0].count == 30
         
         payload = [
@@ -221,14 +221,18 @@ class AssetListTest(TestCase):
         validate(response.data, json_schema)
         
     def test_patch_asset_list5(self):
-        """Should add new count (not new location) with patch request"""
-        
+        """Should add correct counts (not new locations) to more than one asset, with patch request"""
+        # DEBUG
+        print("\n\n###########################THIS TEST##################################\n\n")
         asset1 = Asset.objects.create(
             description='thing one', original_cost=100)
-        asset2 = Asset.objects.create(
+        Asset.objects.create(
             description='thing two', original_cost=200)
         
         Count.objects.create(asset=asset1, location=self.loc1, count=25)
+        
+        counts = Count.objects.all()
+        assert len(counts) == 1
         
         # This should add location 2 to both assets
         payload = [
@@ -243,8 +247,33 @@ class AssetListTest(TestCase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-        print(response.data)
-        # TODO: find out why 'thing two' location count is 1
+        ############################################################
+        # Check that DB was updated correctly
+        counts = Count.objects.all()
+        self.assertEqual(len(counts), 3)
+        
+        counts = Count.objects.filter(asset=1,location=1)
+        self.assertEqual(counts[0].count, 25)
+        
+        counts = Count.objects.filter(asset=1,location=2)
+        self.assertEqual(counts[0].count, 1)
+        
+        counts = Count.objects.filter(asset=2,location=2)
+        self.assertEqual(counts[0].count, 300)
+        
+        ############################################################
+        # Check that response is consistent with what is in the DB
+        #print(response.data)
+        
+        asset1_data = dict(response.data[0].items())
+        asset2_data = dict(response.data[1].items())
+        
+        self.assertEqual((asset1_data['locations'][0]['count']), 25)
+        self.assertEqual((asset1_data['locations'][1]['count']), 1)
+        self.assertEqual((asset2_data['locations'][0]['count']), 300)
+        
+        
+        # TODO: find out why asset2 'thing two' location count shows 1, not 300
         
         json_schema = load_json_schema("asset_list_patch_response.json")
         validate(response.data, json_schema)

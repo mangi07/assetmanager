@@ -98,12 +98,15 @@ class LocationUpdateSerializer(CustomUpdateSerializer):
 class LocationField(serializers.RelatedField):
     def to_representation(self, value):
         try:
+            # value passed in is location object,
+            # so need to get count object here, instead
             count = Count.objects.get(pk=value.id).count
         except:
             # TODO: test this or change it
             count = 0
+            print(value)
         return {'location':value.description, 'count':count}
-    
+
     
 class AssetSerializer(serializers.ModelSerializer):
     locations = LocationField(many=True, read_only=True)
