@@ -222,8 +222,6 @@ class AssetListTest(TestCase):
         
     def test_patch_asset_list5(self):
         """Should add correct counts (not new locations) to more than one asset, with patch request"""
-        # DEBUG
-        print("\n\n###########################THIS TEST##################################\n\n")
         asset1 = Asset.objects.create(
             description='thing one', original_cost=100)
         Asset.objects.create(
@@ -271,9 +269,6 @@ class AssetListTest(TestCase):
         self.assertEqual((asset1_data['locations'][0]['count']), 25)
         self.assertEqual((asset1_data['locations'][1]['count']), 1)
         self.assertEqual((asset2_data['locations'][0]['count']), 300)
-        
-        
-        # TODO: find out why asset2 'thing two' location count shows 1, not 300
         
         json_schema = load_json_schema("asset_list_patch_response.json")
         validate(response.data, json_schema)

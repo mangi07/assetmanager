@@ -94,28 +94,40 @@ class LocationUpdateSerializer(CustomUpdateSerializer):
     def _assign_item_fields(self, loc, update_loc):
             loc.description = update_loc['description']
 
-    
-class LocationField(serializers.RelatedField):
-    def to_representation(self, value):
-        try:
-            # value passed in is location object,
-            # so need to get count object here, instead
-            count = Count.objects.get(pk=value.id).count
-        except:
-            # TODO: test this or change it
-            count = 0
-            print(value)
-        return {'location':value.description, 'count':count}
+# TODO: this was being used but might go away
+#class LocationField(serializers.RelatedField):
+#    def to_representation(self, value):
+#        try:
+#            # value passed in is location object,
+#            # so need to get count object here, instead
+#            count = Count.objects.get(pk=value.id).count
+#        except:
+#            # TODO: test this or change it
+#            count = 0
+#            print(value)
+#        return {'location':value.description, 'count':count}
 
     
 class AssetSerializer(serializers.ModelSerializer):
-    locations = LocationField(many=True, read_only=True)
-    
+    locations = serializers.SerializerMethodField()
     
     class Meta:
         model = Asset
         fields = ('id', 'description','original_cost','locations','created')
     
+    def get_locations(self, asset):
+        counts_per_location = []
+        try:
+            # value passed in is location object,
+            # so need to get count object here, instead
+            count_objs = Count.objects.filter(asset=asset.id)
+            for count_obj in count_objs:
+                location = Location.objects.get(pk=count_obj.location.id)
+                count = {'location':location.description, 'count':count_obj.count}
+                counts_per_location.append(count)
+        except:
+            raise BadRequestException("Error retrieving location counts in AssetSerializer.")
+        return counts_per_location
     
     def to_internal_value(self, data):
         internal_value = super(AssetSerializer, self).to_internal_value(data)
