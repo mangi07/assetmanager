@@ -272,5 +272,73 @@ class AssetListTest(TestCase):
         
         json_schema = load_json_schema("asset_list_patch_response.json")
         validate(response.data, json_schema)
+    
+    ############################################################
+    # test bulk delete of assets
+    def test_bulk_delete1(self):
+        """No data should return status 400"""
+        response = self.client.post(
+                reverse('asset-list'),
+                content_type="application/json"
+            )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_bulk_delete2(self):
+        """test 'delete' missing in data should return status 400"""
+        payload = {'someotherkey':[1,2,3]}
+        response = self.client.post(
+                reverse('asset-list'),
+                json.dumps(payload),
+                content_type="application/json"
+            )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_bulk_delete3(self):
+        """test only some ids to delete exist, so none get deleted"""
+        locations = Location.objects.all()
+        assert len(locations) == 2
+        payload = {'delete':[1,2,3]}
+        response = self.client.post(
+                reverse('asset-list'),
+                json.dumps(payload),
+                content_type="application/json"
+            )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        locations = Location.objects.all()
+        self.assertEqual(len(locations), 2)
+        
+    def test_bulk_delete4(self):
+        """test successfully delete one asset"""
+        Asset.objects.create(description="thing 1", original_cost=500)
+        Asset.objects.create(description="thing 2", original_cost=1500)
+        assert Asset.objects.count() == 2
+        
+        payload = {'delete':[1]}
+        response = self.client.post(
+                reverse('asset-list'),
+                json.dumps(payload),
+                content_type="application/json"
+            )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Asset.objects.count(), 1)
+    
+    def test_bulk_delete5(self):
+        """test successfully delete multiple assets"""
+        Asset.objects.create(description="thing 1", original_cost=500)
+        Asset.objects.create(description="thing 2", original_cost=1500)
+        assert Asset.objects.count() == 2
+        
+        payload = {'delete':[1,2]}
+        response = self.client.post(
+                reverse('asset-list'),
+                json.dumps(payload),
+                content_type="application/json"
+            )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(Asset.objects.count(), 0)
+        print(response.data)
         
     # TODO: add JWT capability to API

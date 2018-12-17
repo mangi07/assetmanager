@@ -54,6 +54,13 @@ class CustomBulkAPIView(CustomPaginator, APIView):
     def post(self, request, format=None):
         if not request.data:
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+        
+        # TODO: this is a workaround because couldn't figure out how to manipulate
+        # processing of DELETE request in middelware to keep data,
+        # so bulk delete requests have to be made as post requests for now.
+        if 'delete' in request.data:
+            return self.delete(request)
+        
         data = request.data
         serializer = self.Serializer(data=data, many=True)
         if serializer.is_valid():
@@ -83,10 +90,19 @@ class CustomBulkAPIView(CustomPaginator, APIView):
     def delete(self, request, format=None):
         if not request.data:
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
-        data = request.data
+        if (
+                not 'delete' in request.data or 
+                type(request.data['delete']) != list or
+                [(lambda id: type(id)!=int)(id) 
+                    for id in request.data['delete']]
+            ):
+            return Response("expected list of ids to delete: eg: {\"delete\":[1,2,3]}",
+                    status.HTTP_400_BAD_REQUEST)
+        data = request.data['delete']
         
         # all given ids must exist and all or none of them should be deleted
         items = self.Item.objects.filter(pk__in=data)
+
         if items and len(items) == len(data):
             try:
                 items.delete()

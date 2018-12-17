@@ -123,11 +123,11 @@ class LocationListTest(TestCase):
         """should be able to delete one location given its id"""
         locs = Location.objects.all()
         loc_ids = [loc.id for loc in locs]
-        payload = [loc_ids[0]]
+        payload = {'delete': [loc_ids[0]]}
         
         prev_count = Location.objects.count()
         
-        response = self.client.delete(
+        response = self.client.post(
                 reverse('location-list'),
                 json.dumps(payload),
                 content_type="application/json"
@@ -142,12 +142,13 @@ class LocationListTest(TestCase):
         """should be able to delete both locations given their ids"""
         locs = Location.objects.all()
         loc_ids = [loc.id for loc in locs]
+        payload = {'delete': loc_ids}
         
         prev_count = Location.objects.count()
         
-        response = self.client.delete(
+        response = self.client.post(
                 reverse('location-list'),
-                json.dumps(loc_ids),
+                json.dumps(payload),
                 content_type="application/json"
             )
         
