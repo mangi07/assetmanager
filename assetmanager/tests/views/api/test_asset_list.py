@@ -285,8 +285,8 @@ class AssetListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
     
     def test_bulk_delete2(self):
-        """test 'delete' missing in data should return status 400"""
-        payload = {'someotherkey':[1,2,3]}
+        """List property in request json not named \"delete\" returns status 400"""
+        payload = {"someotherkey":[1,2,3]}
         response = self.client.post(
                 reverse('asset-list'),
                 json.dumps(payload),
@@ -296,6 +296,28 @@ class AssetListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_bulk_delete3(self):
+        """Property in request json not a list returns status 400"""
+        payload = {"delete":"not a list here"}
+        response = self.client.post(
+                reverse('asset-list'),
+                json.dumps(payload),
+                content_type="application/json"
+            )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_bulk_delete4(self):
+        """List property in request json not all numbers returns status 400"""
+        payload = {"delete":[1, "two is str", 3]}
+        response = self.client.post(
+                reverse('asset-list'),
+                json.dumps(payload),
+                content_type="application/json"
+            )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        
+    def test_bulk_delete5(self):
         """test only some ids to delete exist, so none get deleted"""
         locations = Location.objects.all()
         assert len(locations) == 2
@@ -310,7 +332,7 @@ class AssetListTest(TestCase):
         locations = Location.objects.all()
         self.assertEqual(len(locations), 2)
         
-    def test_bulk_delete4(self):
+    def test_bulk_delete6(self):
         """test successfully delete one asset"""
         Asset.objects.create(description="thing 1", original_cost=500)
         Asset.objects.create(description="thing 2", original_cost=1500)
@@ -325,7 +347,7 @@ class AssetListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Asset.objects.count(), 1)
     
-    def test_bulk_delete5(self):
+    def test_bulk_delete7(self):
         """test successfully delete multiple assets"""
         Asset.objects.create(description="thing 1", original_cost=500)
         Asset.objects.create(description="thing 2", original_cost=1500)
@@ -339,6 +361,6 @@ class AssetListTest(TestCase):
             )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Asset.objects.count(), 0)
-        print(response.data)
+    
         
     # TODO: add JWT capability to API

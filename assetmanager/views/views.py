@@ -90,14 +90,16 @@ class CustomBulkAPIView(CustomPaginator, APIView):
     def delete(self, request, format=None):
         if not request.data:
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+        
+        err_msg = 'expected list of ids to delete: eg: {"delete":[1,2,3]}'
         if (
                 not 'delete' in request.data or 
                 type(request.data['delete']) != list or
-                [(lambda id: type(id)!=int)(id) 
+                False in [(lambda id: type(id)==int)(id) 
                     for id in request.data['delete']]
             ):
-            return Response("expected list of ids to delete: eg: {\"delete\":[1,2,3]}",
-                    status.HTTP_400_BAD_REQUEST)
+            return Response(err_msg, status.HTTP_400_BAD_REQUEST)
+            
         data = request.data['delete']
         
         # all given ids must exist and all or none of them should be deleted
