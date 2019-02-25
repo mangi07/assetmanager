@@ -9,6 +9,7 @@ from ....models import Asset, Location, Count
 from ...schemas.utils import load_json_schema
 from jsonschema import validate
 from decimal import Decimal
+import time
 
 
 class AssetListTest(TestCase):
@@ -276,6 +277,7 @@ class AssetListTest(TestCase):
     ############################################################
     # test bulk delete of assets
     def test_bulk_delete1(self):
+        #print("TEST 1")
         """No data should return status 400"""
         response = self.client.post(
                 reverse('asset-list'),
@@ -285,6 +287,7 @@ class AssetListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
     
     def test_bulk_delete2(self):
+        #print("TEST 2")
         """List property in request json not named \"delete\" returns status 400"""
         payload = {"someotherkey":[1,2,3]}
         response = self.client.post(
@@ -292,10 +295,11 @@ class AssetListTest(TestCase):
                 json.dumps(payload),
                 content_type="application/json"
             )
-        
+        time.sleep(2)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_bulk_delete3(self):
+        #print("TEST 3")
         """Property in request json not a list returns status 400"""
         payload = {"delete":"not a list here"}
         response = self.client.post(
@@ -307,6 +311,7 @@ class AssetListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_bulk_delete4(self):
+        #print("TEST 4")
         """List property in request json not all numbers returns status 400"""
         payload = {"delete":[1, "two is str", 3]}
         response = self.client.post(
@@ -318,6 +323,7 @@ class AssetListTest(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         
     def test_bulk_delete5(self):
+        #print("TEST 5")
         """test only some ids to delete exist, so none get deleted"""
         locations = Location.objects.all()
         assert len(locations) == 2
@@ -333,6 +339,7 @@ class AssetListTest(TestCase):
         self.assertEqual(len(locations), 2)
         
     def test_bulk_delete6(self):
+        #print("TEST 6")
         """test successfully delete one asset"""
         Asset.objects.create(description="thing 1", original_cost=500)
         Asset.objects.create(description="thing 2", original_cost=1500)
@@ -348,6 +355,7 @@ class AssetListTest(TestCase):
         self.assertEqual(Asset.objects.count(), 1)
     
     def test_bulk_delete7(self):
+        #print("TEST 7")
         """test successfully delete multiple assets"""
         Asset.objects.create(description="thing 1", original_cost=500)
         Asset.objects.create(description="thing 2", original_cost=1500)

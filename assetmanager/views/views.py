@@ -1,5 +1,6 @@
 from assetmanager.models import Asset, Location
-from assetmanager.serializers import (AssetSerializer,
+from assetmanager.serializers import (
+    AssetSerializer,
     AssetUpdateSerializer,
     LocationSerializer,
     LocationUpdateSerializer)
@@ -12,11 +13,14 @@ from rest_framework import generics
 
 from rest_framework.decorators import api_view
 from rest_framework.reverse import reverse
-from rest_framework.settings import api_settings
 
 #from django_filters.rest_framework import DjangoFilterBackend
 from ..filters import LocationFilter, AssetFilter
 from .custom_paginator import CustomPaginator
+
+from ..tests.schemas.utils import load_json_schema
+from jsonschema import validate
+from jsonschema import ValidationError
 
 # TODO: play around with https://github.com/miki725/django-rest-framework-bulk
 # and consider replacing some code with this
@@ -58,7 +62,9 @@ class CustomBulkAPIView(CustomPaginator, APIView):
         # TODO: this is a workaround because couldn't figure out how to manipulate
         # processing of DELETE request in middelware to keep data,
         # so bulk delete requests have to be made as post requests for now.
-        if 'delete' in request.data:
+        # TODO: if request post schema for bulk update doesn't validate and 'delete' in data,
+        #   call delete function, else raise an error.
+        if True and 'delete' in request.data:
             return self.delete(request)
         
         data = request.data
@@ -79,7 +85,7 @@ class CustomBulkAPIView(CustomPaginator, APIView):
         if serializer.is_valid():
             serializer.save()
             # need to use the serializer used in get requests 
-            # for representation data in the response
+            # for representing data in the response
             id_list = [d['id'] for d in request.data]
             items = self.Item.objects.filter(pk__in=id_list)
             serializer = self.Serializer(items, many=True)
@@ -91,14 +97,21 @@ class CustomBulkAPIView(CustomPaginator, APIView):
         if not request.data:
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
         
-        err_msg = 'expected list of ids to delete: eg: {"delete":[1,2,3]}'
+        m_err_msg = '.  Expected list of ids to delete: eg: {"delete":[1,2,3]}'
+        json_schema = load_json_schema("asset_list_delete.json")
+        try:
+            validate(request.data, json_schema)
+        except ValidationError as err:
+            msg = err.message + m_err_msg
+            return Response(msg, status.HTTP_400_BAD_REQUEST)
+        
         if (
                 not 'delete' in request.data or 
                 type(request.data['delete']) != list or
                 False in [(lambda id: type(id)==int)(id) 
                     for id in request.data['delete']]
             ):
-            return Response(err_msg, status.HTTP_400_BAD_REQUEST)
+            return Response(m_err_msg, status.HTTP_400_BAD_REQUEST)
             
         data = request.data['delete']
         
@@ -130,7 +143,7 @@ class LocationList(CustomBulkAPIView):
             LocationSerializer,
             LocationUpdateSerializer)
 
-# TODO: test bulk update and bulk delete
+
 class AssetList(CustomBulkAPIView):
     def __init__(self):
         super().__init__(Asset,
