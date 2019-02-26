@@ -22,8 +22,18 @@ from ..tests.schemas.utils import load_json_schema
 from jsonschema import validate
 from jsonschema import ValidationError
 
+from django.views.generic import TemplateView
+
 # TODO: play around with https://github.com/miki725/django-rest-framework-bulk
 # and consider replacing some code with this
+
+
+class HomePageView(TemplateView):
+    template_name = "index.html"
+
+
+class AboutPageView(TemplateView):
+    template_name = "about.html"
 
 
 @api_view(['GET'])
