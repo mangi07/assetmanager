@@ -27,6 +27,9 @@ from django.views.generic import TemplateView
 # TODO: play around with https://github.com/miki725/django-rest-framework-bulk
 # and consider replacing some code with this
 
+class LoginView(TemplateView):
+    template_name = "login.html"
+
 
 class HomePageView(TemplateView):
     template_name = "index.html"
