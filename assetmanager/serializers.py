@@ -74,10 +74,11 @@ class CustomUpdateSerializer(ABC):
         self.data = self.Serializer(items, many=True).data
 
 
-class LocationSerializer(serializers.ModelSerializer):
+class LocationSerializer(serializers.ModelSerializer):    
     class Meta:
         model = Location
-        fields = '__all__'
+        #fields = '__all__'
+        fields = ('id', 'description', 'created', 'in_location', 'location_nesting')
         
         
 class LocationUpdateSerializer(CustomUpdateSerializer):
@@ -90,9 +91,13 @@ class LocationUpdateSerializer(CustomUpdateSerializer):
         for loc in self.data:
              int(loc['id'])
              str(loc['description'])
+             if 'in_location' in loc:
+                 int(loc['in_location'])
     
     def _assign_item_fields(self, loc, update_loc):
             loc.description = update_loc['description']
+            if 'in_location' in update_loc:
+                loc.in_location = int(loc['in_location'])
 
 # TODO: this was being used but might go away
 #class LocationField(serializers.RelatedField):
@@ -123,6 +128,7 @@ class AssetSerializer(serializers.ModelSerializer):
             count_objs = Count.objects.filter(asset=asset.id)
             for count_obj in count_objs:
                 location = Location.objects.get(pk=count_obj.location.id)
+                # TODO: build string representing location nesting
                 count = {'location':location.description, 'count':count_obj.count}
                 counts_per_location.append(count)
         except:

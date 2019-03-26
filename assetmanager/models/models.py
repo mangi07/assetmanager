@@ -9,9 +9,25 @@ class Location(models.Model):
     created = models.DateTimeField(default=now, db_index=True)
     in_location = models.ForeignKey('self', on_delete=models.CASCADE, null=True, related_name='locations')
     
+    # prints this location's subnesting.
+    # For example, if this location's description is 'room1' in location 'building1'
+    # then this method will return 'building1 >> room1'
+    @property
+    def location_nesting(self):
+        locs = [self.description]
+        curr = self
+        s = ""
+        while curr is not None:
+            curr = curr.in_location
+            if curr is not None:
+                locs.append(curr.description)
+        while len(locs) > 1:
+            s += locs.pop() + " >> "
+        s += locs.pop()
+        return s
+    
     def __str__(self):
         return self.description
-
 
 class Asset(models.Model):
     description = models.CharField(max_length=200)
