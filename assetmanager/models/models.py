@@ -7,6 +7,7 @@ from django.utils.timezone import now
 class Location(models.Model):
     description = models.CharField(max_length=200, unique=True)
     created = models.DateTimeField(default=now, db_index=True)
+    in_location = models.ForeignKey('self', on_delete=models.CASCADE, null=True, related_name='locations')
     
     def __str__(self):
         return self.description
