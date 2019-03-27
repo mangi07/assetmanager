@@ -69,6 +69,7 @@ class CustomBulkAPIView(CustomPaginator, APIView):
     
     
     def post(self, request, format=None):
+        """bulk creation or deletion of items given in list"""
         if not request.data:
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
         
@@ -89,6 +90,7 @@ class CustomBulkAPIView(CustomPaginator, APIView):
     
     
     def patch(self, request, format=None):
+        """bulk update of items given in list"""
         if not request.data:
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
         
@@ -97,7 +99,7 @@ class CustomBulkAPIView(CustomPaginator, APIView):
         
         if serializer.is_valid():
             serializer.save()
-            # need to use the serializer used in get requests 
+            # need to use the serializer used in get requests
             # for representing data in the response
             id_list = [d['id'] for d in request.data]
             items = self.Item.objects.filter(pk__in=id_list)
@@ -119,9 +121,9 @@ class CustomBulkAPIView(CustomPaginator, APIView):
             return Response(msg, status.HTTP_400_BAD_REQUEST)
         
         if (
-                not 'delete' in request.data or 
+                not 'delete' in request.data or
                 type(request.data['delete']) != list or
-                False in [(lambda id: type(id)==int)(id) 
+                False in [(lambda id: type(id)==int)(id)
                     for id in request.data['delete']]
             ):
             return Response(m_err_msg, status.HTTP_400_BAD_REQUEST)
@@ -163,6 +165,8 @@ class AssetList(CustomBulkAPIView):
             AssetFilter,
             AssetSerializer,
             AssetUpdateSerializer)
+        
+# TODO: api view to bulk remove asset-location associations
 
             
             

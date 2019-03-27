@@ -235,9 +235,14 @@ class AssetListTest(TestCase):
         
         # This should add location 2 to both assets
         payload = [
-                {"id":1, "locations":[{"location":"loc2","count":1}]},
-                {"id":2, "locations":[{"location":"loc2","count":300}]}
-                ]
+                {"id":1, "locations":[
+                    {"location":"loc1","count":100},
+                    {"location":"loc2","count":1}
+                ]},
+                {"id":2, "locations":[
+                    {"location":"loc2","count":300}
+                ]}
+            ]
         response = self.client.patch(
                 reverse('asset-list'),
                 json.dumps(payload),
@@ -251,14 +256,14 @@ class AssetListTest(TestCase):
         counts = Count.objects.all()
         self.assertEqual(len(counts), 3)
         
-        counts = Count.objects.filter(asset=1,location=1)
-        self.assertEqual(counts[0].count, 25)
+        count = Count.objects.filter(asset=1,location=1).first().count
+        self.assertEqual(count, 100)
         
-        counts = Count.objects.filter(asset=1,location=2)
-        self.assertEqual(counts[0].count, 1)
+        count = Count.objects.filter(asset=1,location=2).first().count
+        self.assertEqual(count, 1)
         
-        counts = Count.objects.filter(asset=2,location=2)
-        self.assertEqual(counts[0].count, 300)
+        count = Count.objects.filter(asset=2,location=2).first().count
+        self.assertEqual(count, 300)
         
         ############################################################
         # Check that response is consistent with what is in the DB
@@ -267,7 +272,7 @@ class AssetListTest(TestCase):
         asset1_data = dict(response.data[0].items())
         asset2_data = dict(response.data[1].items())
         
-        self.assertEqual((asset1_data['locations'][0]['count']), 25)
+        self.assertEqual((asset1_data['locations'][0]['count']), 100)
         self.assertEqual((asset1_data['locations'][1]['count']), 1)
         self.assertEqual((asset2_data['locations'][0]['count']), 300)
         

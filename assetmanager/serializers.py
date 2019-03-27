@@ -10,7 +10,6 @@ from jsonschema import validate
 from . import serializer_utils
 
 
-# TODO: play with api to further test this class can be used as expected
 class CustomUpdateSerializer(ABC):
     """Handles a list of DB entries to be updated via either patch or put request"""
     @abstractmethod
@@ -74,7 +73,7 @@ class CustomUpdateSerializer(ABC):
         self.data = self.Serializer(items, many=True).data
 
 
-class LocationSerializer(serializers.ModelSerializer):    
+class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         #fields = '__all__'
@@ -123,13 +122,12 @@ class AssetSerializer(serializers.ModelSerializer):
     def get_locations(self, asset):
         counts_per_location = []
         try:
-            # value passed in is location object,
+            # value passed in is asset object,
             # so need to get count object here, instead
             count_objs = Count.objects.filter(asset=asset.id)
             for count_obj in count_objs:
                 location = Location.objects.get(pk=count_obj.location.id)
-                # TODO: build string representing location nesting
-                count = {'location':location.description, 'count':count_obj.count}
+                count = {'location':location.location_nesting, 'count':count_obj.count}
                 counts_per_location.append(count)
         except:
             raise BadRequestException("Error retrieving location counts in AssetSerializer.")
@@ -149,48 +147,13 @@ class AssetSerializer(serializers.ModelSerializer):
             if desc in descs:
                 return desc
         return None
-        
-    def save_locations(self, asset, locations):
-        """A list of counts per location is given for the asset.
-        If the there is already a count of the asset at a given location,
-        it will be updated.  Otherwise, the given location count will
-        be newly associated with the asset."""
-        
-        # fail if duplicate locations are given
-        descs = [loc['location'] for loc in locations]
-        dup_descr = self.find_duplicate_descs(descs)
-        if dup_descr:
-            raise BadRequestException(
-                ("Duplicate locations given: '{}'".format(dup_descr))
-            )
-        
-        for location in locations:
-            descr = location['location']
-            count = location['count']
-            # this filter returns None if location description not found
-            loc = Location.objects.filter(description=descr).first()
-            if not loc:
-                raise BadRequestException(
-                        ("'{}' location does not exist."
-                         "  You need to first create the location before "
-                         "trying to add an asset count to it.".format(descr))
-                    )
-                        
-            # update count if it exists, otherwise create it
-            location_count = Count.objects.filter(asset=asset, location=loc).first()
-            if location_count:
-                location_count.count = count
-                location_count.save()
-                #Count.objects.update(location=loc, count=count)
-            else:
-                Count.objects.create(asset=asset, location=loc, count=count)
+    
             
     def create(self, validated_data):
         location_data = validated_data.pop('locations')
         asset = Asset.objects.create(**validated_data)
         try:
-            # TODO: refactor out this to use serializer_utils.save_asset_locations
-            self.save_locations(asset, location_data)
+            serializer_utils.save_asset_locations(asset, location_data)
         except BadRequestException:
             asset.delete()
             raise
@@ -201,7 +164,7 @@ class AssetSerializer(serializers.ModelSerializer):
         # TODO: refactor out this to use serializer_utils.update_asset
         if validated_data['locations']:
             location_data = validated_data.pop('locations')
-            self.save_locations(asset, location_data)
+            serializer_utils.save_asset_locations(asset, location_data)
         asset.description = validated_data.get('description', asset.description)
         asset.original_cost = validated_data.get('original_cost', asset.original_cost)
         # TODO: is there a way to iterate through these mappings so
@@ -212,8 +175,6 @@ class AssetSerializer(serializers.ModelSerializer):
 class AssetUpdateSerializer(CustomUpdateSerializer):
     """
     updates a list of assets
-    if the requested location count for an asset exists, it will be updated
-    if the requested location count for an asset does NOT exists, it will be created for that asset
     """
     def __init__(self, data=None, many=False):
         super().__init__(Asset, AssetSerializer, data, many)
