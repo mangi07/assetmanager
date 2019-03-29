@@ -58,12 +58,13 @@ class LocationSerializerTest(TestCase):
         """Serialize a location."""
         location = Location.objects.create(description="fake location")
         serializer = LocationSerializer(location)
-        #self.assertDictEqual(serializer.data, 
+        #self.assertDictEqual(serializer.data,
         #                     {'id': 1, 'description': 'fake location'})
         
         json_schema = load_json_schema("location_serializer.json")
         validate(serializer.data, json_schema)
-        
+    
+    
     def test_location_can_be_deserialized(self):
         """Deserialize a location that has been correctly serialized:"""
         data = {'id': 1, 'description': 'fake location1'}
@@ -115,22 +116,25 @@ class LocationUpdateSerializerTest(TestCase):
         ser = LocationUpdateSerializer(data=data, many=True)
         with self.assertRaises(BadRequestException):
             ser.validate_post_data()
-        
+    
+    
     def test_validate_post_data_3(self):
         """Validation should raise BadRequestException when given jibberish data."""
         data = "jibberish"
         ser = LocationUpdateSerializer(data=data, many=True)
         with self.assertRaises(BadRequestException):
             ser.validate_post_data()
-            
+    
+    
     def test_validate_post_data_4(self):
         """Validation should succeed with correct post data"""
         data = [{"id":1,"description":"some place"}]
         ser = LocationUpdateSerializer(data=data, many=True)
         ser.validate_post_data()
-        
+    
+    
     def test_is_valid_1(self):
-        """Validation method should return True when entries are found in the 
+        """Validation method should return True when entries are found in the
         database for corresponding post data."""
         # create entries
         locations = Location.objects.bulk_create(
@@ -148,9 +152,10 @@ class LocationUpdateSerializerTest(TestCase):
         # call method under test and assert return value is True
         ret = ser.is_valid()
         self.assertTrue(ret)
-        
+    
+    
     def test_is_valid_2(self):
-        """Validation method should return False when entries are NOT found in 
+        """Validation method should return False when entries are NOT found in
         the database for corresponding post data."""
         # create entries
         locations = Location.objects.bulk_create(
@@ -168,6 +173,31 @@ class LocationUpdateSerializerTest(TestCase):
         # call method under test and assert return value is False
         ret = ser.is_valid()
         self.assertFalse(ret)
+    
+    
+    def test_is_valid_3(self):
+        """is_valid should return false because the location was not found."""
+        locations = Location.objects.bulk_create(
+                    [Location(id=1, description="some place 1")])
+        data = [{"id":100, "description":"updated place 1"}]
+        ser = LocationUpdateSerializer(data=data, many=True)
+        self.assertFalse(ser.is_valid())
+        
+        
+    def test_is_valid_4(self):
+        """is_valid should return false because some of the locations were not found."""
+        locations = Location.objects.bulk_create(
+                    [Location(id=1, description="some place 1"),
+                     Location(id=2, description="some place 2"),
+                     Location(id=3, description="some place 3")]
+                    )
+        data = [{"id":100, "description":"updated place 100"},
+                {"id":500, "description":"updated place 500"},
+                {"id":1, "description":"updated place 1"},
+                {"id":3, "description":"updated place 3"},
+                {"id":21, "description":"updated place 1"}]
+        ser = LocationUpdateSerializer(data=data, many=True)
+        self.assertFalse(ser.is_valid())
         
         
     def test_save_1(self):
@@ -200,6 +230,7 @@ class LocationUpdateSerializerTest(TestCase):
         self.assertEqual(Location.objects.count(), 3)
         # Verify descriptions were updated
         locs = Location.objects.all()
+        # TODO: may be more pythonic to order 2 lists and then compare them to assert equality
         x = 1
         descriptions = ["updated place 1", "updated place 2", "updated place 3"]
         for loc in locs:
@@ -209,8 +240,10 @@ class LocationUpdateSerializerTest(TestCase):
             
         # No new locations should have been created.
         self.assertEqual(x, 4)
-    
         
+
+    
+    
         
         
         

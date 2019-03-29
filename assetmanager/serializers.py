@@ -50,10 +50,13 @@ class CustomUpdateSerializer(ABC):
         self.validate_post_data()
         id_list = [item['id'] for item in self.data]
         items = self.Model.objects.filter(pk__in=id_list)
+        
+        item_ids = list(items.values_list('id', flat=True))
+        difference = set(id_list).difference(item_ids)
         if items and len(items) == len(id_list):
             self.items = items
             return True
-        self.errors = "One or more items were not found. No updates performed."
+        self.errors = "No updates performed because items with the following ids were not found: " + str(difference) + "."
         return False
     
     @transaction.atomic
@@ -84,32 +87,29 @@ class LocationUpdateSerializer(CustomUpdateSerializer):
     """updates a list of locations"""
     def __init__(self, data=None, many=False):
         super().__init__(Location, LocationSerializer, data, many)
-        
+    
+    # TODO: Need to test this!!
     def _validate_post_data(self):
         """should raise an exception if data is invalid"""
         for loc in self.data:
              int(loc['id'])
-             str(loc['description'])
+             assert('description' in loc or 'in_location' in loc)
+             if 'description' in loc:
+                str(loc['description'])
              if 'in_location' in loc:
                  int(loc['in_location'])
     
+    # TODO: Need to test this!!
     def _assign_item_fields(self, loc, update_loc):
+        if 'description' in update_loc:
             loc.description = update_loc['description']
-            if 'in_location' in update_loc:
-                loc.in_location = int(loc['in_location'])
-
-# TODO: this was being used but might go away
-#class LocationField(serializers.RelatedField):
-#    def to_representation(self, value):
-#        try:
-#            # value passed in is location object,
-#            # so need to get count object here, instead
-#            count = Count.objects.get(pk=value.id).count
-#        except:
-#            # TODO: test this or change it
-#            count = 0
-#            print(value)
-#        return {'location':value.description, 'count':count}
+        if 'in_location' in update_loc:
+            in_location = Location.objects.filter(
+                pk=int(update_loc['in_location'])
+            ).first()
+            if in_location is None:
+                raise BadRequestException("Could not find location with id " + update_loc['in_location'] + ".")
+            loc.in_location = in_location
 
     
 class AssetSerializer(serializers.ModelSerializer):

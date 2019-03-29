@@ -41,7 +41,7 @@ class Asset(models.Model):
     
 class Count(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
-    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    location = models.ForeignKey(Location, on_delete=models.PROTECT)  # TODO: test that this prevents deleting a location in a count
     count = models.IntegerField()
     
     def __int__(self):
