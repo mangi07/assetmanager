@@ -1,5 +1,8 @@
 # Asset Management System
 
+Copyright Benjamin R. Olson - All Rights Reserved
+
+
 ## pythonanywhere.com setup
 
 1. Open up a shell and clone this repo to your home directory.

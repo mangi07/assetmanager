@@ -75,6 +75,7 @@ class LocationSerializerTest(TestCase):
         data = JSONParser().parse(stream)
         serializer = LocationSerializer(data=data)
         serializer.is_valid()
+        assert(serializer.is_valid())
         
         """4. convert this data structure to Location object instance"""
         location = serializer.save()
@@ -82,26 +83,43 @@ class LocationSerializerTest(TestCase):
         self.assertEqual(location.description, 'fake location1')
         
         
-    def test_location_descriptions_must_be_unique(self):
-        """Saving more than one location with the same name should fail."""
-        data = {'description': 'fake location'}
-        count = 0
-        try:
-            for i in range(100):
-                content = JSONRenderer().render(data)
-                stream = io.BytesIO(content)
-                data = JSONParser().parse(stream)
-                serializer = LocationSerializer(data=data)
-                serializer.is_valid()
-                serializer.save()
-                count += 1
-        except:
-            pass
+    def test_location_descriptions_must_be_unique_under_same_parent_location(self):
+        """Should not create two locations with the same description when both share the same parent location."""
+        # create parent location
+        data = {'description': 'parent'}
+        content = JSONRenderer().render(data)
+        stream = io.BytesIO(content)
+        data = JSONParser().parse(stream)
+        serializer = LocationSerializer(data=data)
+        serializer.is_valid()
+        serializer.save()
+        assert(Location.objects.filter(pk=1).first().description == 'parent')
         
-        # if count is 1, means only the first save worked
-        self.assertEqual(count, 1)
+        # create child location
+        data = {'description': 'child', 'in_location': 1}
+        content = JSONRenderer().render(data)
+        stream = io.BytesIO(content)
+        data = JSONParser().parse(stream)
+        serializer = LocationSerializer(data=data)
+        serializer.is_valid()
+        serializer.save()
+        
+        # try to create another child location with same description
+        data = {'description': 'child', 'in_location': 1}
+        content = JSONRenderer().render(data)
+        stream = io.BytesIO(content)
+        data = JSONParser().parse(stream)
+        serializer = LocationSerializer(data=data)
+        with self.assertRaises(AssertionError):
+            serializer.is_valid()
+            serializer.save()
         
         
+    def test_location_descriptions_with_no_parent_locations_must_be_unique(self):
+        """Should not create two locations with the same description when both have no parent location."""
+        # TODO
+        pass
+    
 class LocationUpdateSerializerTest(TestCase):
     def test_validate_post_data_1(self):
         """Validation should raise BadRequestException on no post data."""

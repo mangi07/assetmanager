@@ -2,12 +2,12 @@ from django.db import models
 from django.utils.timezone import now
 
 
-#   should not create two locations with the same description,
+#   should not create two locations with the same description when both share the same parent location
 #   if location is deleted, all counts with that location will also be deleted
 class Location(models.Model):
-    description = models.CharField(max_length=200, unique=True)
+    description = models.CharField(max_length=200)
     created = models.DateTimeField(default=now, db_index=True)
-    in_location = models.ForeignKey('self', on_delete=models.CASCADE, null=True, related_name='locations')
+    in_location = models.ForeignKey('self', on_delete=models.CASCADE, null=True, default=None, related_name='locations')
     
     # prints this location's subnesting.
     # For example, if this location's description is 'room1' in location 'building1'
@@ -28,6 +28,10 @@ class Location(models.Model):
     
     def __str__(self):
         return self.description
+        
+    class Meta:
+        unique_together = ('description', 'in_location')
+
 
 class Asset(models.Model):
     description = models.CharField(max_length=200)

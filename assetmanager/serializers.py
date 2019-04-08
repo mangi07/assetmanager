@@ -75,7 +75,7 @@ class CustomUpdateSerializer(ABC):
         items = self.Model.objects.filter(pk__in=id_list)
         self.data = self.Serializer(items, many=True).data
 
-
+# TODO: need to validate outside dp level to prevent duplicate descriptions with no parent locations
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
