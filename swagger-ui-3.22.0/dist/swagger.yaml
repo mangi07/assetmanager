@@ -1,0 +1,396 @@
+openapi: 3.0.0
+info:
+  title: "Asset Manager"
+  description: "Documentation for the Asset Manager API"
+  version: 1.0.0
+servers:
+- url: "https://mangi07.pythonanywhere.com/api/v1"
+  description: "Development server."
+tags:
+- name: "assets"
+  description: "Bulk creation, bulk deletion, and bulk update of assets."
+- name: "asset"
+  description: "View asset detail.  Put, patch, or delete an asset."
+- name: "locations"
+  description: "Bulk creation, bulk deletion, and bulk update of locations."
+paths:
+  /assets:
+    get:
+      tags:
+      - "assets"
+      summary: "Paginated listing of assets with optional filtering in query parameters."
+      parameters:
+      - name: description
+        in: query
+        required: false
+        description: Filter results that contain the exact matching description.
+        schema:
+          type: string
+          example: "4-coil electric range"
+      - name: description__like
+        in: query
+        required: false
+        description: Filter results that contain the given text.
+        schema:
+          type: string
+          example: "range"
+      - name: original_cost
+        in: query
+        required: false
+        description: Filter results that contain the exact matching original cost.
+        schema:
+          type: decimal
+          minumum: 0
+          maximum: 9999999999.99
+          example: 1499.99
+      - name: original_cost__lt
+        in: query
+        required: false
+        description: Filter results that are less than the given cost.
+        schema:
+          type: decimal
+          minumum: 0
+          maximum: 9999999999.99
+          example: 2000
+      - name: original_cost__gt
+        in: query
+        required: false
+        description: Filter results that are more than the given cost.
+        schema:
+          type: decimal
+          minumum: 0
+          maximum: 9999999999.99
+          example: 1000
+      - name: location
+        in: query
+        required: false
+        description: Filter results that are at the given location description.
+        schema:
+          type: string
+          example: "kitchen"
+      responses:
+        200:
+          description: "OK - Successfully listed assets."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  required:
+                  - description
+                  - original_cost
+                  $ref: "#/components/schemas/AssetResponse"
+        400:
+          description: "Bad request - No assets listed."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+    post:
+      tags:
+      - "assets"
+      summary: "Bulk creation and bulk deletion of assets.  TODO: document delete after refactoring to add /assets/bulkDelete/"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/AssetCreate"
+        required: true
+      responses:
+        201:
+          description: "OK - All assets were created successfully."
+          content: {}
+        400:
+          description: "Bad request - No assets created."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+    patch:
+      tags:
+      - "assets"
+      summary: "Bulk update of assets."
+      description: "Updating an asset's location counts is done as a whole.  For example, if one asset has counts at locations A and B and the asset is patched with a list of location counts containing only location C, then the asset will loose its counts at locations A and B and only have a count at location C.  So in order to add a new location count and retain the original counts, you would need to submit the orinal counts in addition to the new one.\n\nAlso, duplicate locations are not allowed."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/AssetPatchBulk"
+        required: true
+      responses:
+        200:
+          description: "OK - All assets were updated succesfully."
+        400:
+          description: "Bad request - No assets updated."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+  /asset/{id}:
+    get:
+      tags:
+      - "asset"
+      summary: "Asset detail."
+      parameters:
+      - name: id
+        in: path
+        description: "ID of asset to return."
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 2
+      responses:
+        200:
+          description: "OK - Successfully fetched asset with given id."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetResponse"
+        400:
+          description: "Bad request - No asset with given ID found."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+    put:
+      tags:
+      - "asset"
+      summary: "Replace resource with new asset details."
+      parameters:
+      - name: id
+        in: path
+        description: "ID of asset."
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssetPut"
+        required: true
+      responses:
+        200:
+          description: "OK - Successfully put asset with given id."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetResponse"
+        400:
+          description: "Bad request - No asset with given ID found."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+    patch:
+      tags:
+      - "asset"
+      summary: "Update resource with new asset details."
+      parameters:
+      - name: id
+        in: path
+        description: "ID of asset to update."
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssetPatch"
+        required: true
+      responses:
+        200:
+          description: "OK - Successfully patched asset with given id."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetResponse"
+        400:
+          description: "Bad request - No asset with given ID found."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+    delete:
+      tags:
+      - "asset"
+      summary: "Delete asset with given id."
+      parameters:
+      - name: id
+        in: path
+        description: "ID of asset to delete."
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 2
+      responses:
+        200:
+          description: "OK - Successfully patched asset with given id."
+        400:
+          description: "Bad request - No asset with given ID found."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+    
+    
+components:
+  schemas:
+    AssetPatchBulk:
+      type: object
+      required:
+      - id
+      properties:
+        id:
+          type: string
+          example: "000000002"
+        description:
+          type: string
+          example: "4-coil electric range"
+        original_cost:
+          type: decimal
+          minumum: 0
+          maximum: 9999999999.99
+          example: 1499.99
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationCount"
+        created:
+          type: string
+          example: "2019-03-27T00:17:07.494727Z"
+          description: "Date the asset was first entered into the system."
+    AssetPatch:
+      type: object
+      properties:
+        description:
+          type: string
+          example: "4-coil electric range"
+        original_cost:
+          type: decimal
+          minumum: 0
+          maximum: 9999999999.99
+          example: 1499.99
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationCount"
+        created:
+          type: string
+          example: "2019-03-27T00:17:07.494727Z"
+          description: "Date the asset was first entered into the system."
+    AssetCreate:
+      type: object
+      required:
+      - description
+      - original_cost
+      properties:
+        description:
+          type: string
+          example: "4-coil electric range"
+        original_cost:
+          type: decimal
+          minumum: 0
+          maximum: 9999999999.99
+          example: 1499.99
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationCount"
+        created:
+          type: string
+          example: "2019-03-27T00:17:07.494727Z"
+          description: "Date the asset was first entered into the system."
+    AssetPut:
+      type: object
+      required:
+      - description
+      - original_cost
+      properties:
+        description:
+          type: string
+          example: "4-coil electric range"
+        original_cost:
+          type: decimal
+          minumum: 0
+          maximum: 9999999999.99
+          example: 1499.99
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationCount"
+        created:
+          type: string
+          example: "2019-03-27T00:17:07.494727Z"
+          description: "Date the asset was first entered into the system."
+    AssetResponse:
+      type: object
+      required:
+      - description
+      - original_cost
+      - locations
+      - created
+      properties:
+        description:
+          type: string
+          example: "4-coil electric range"
+        original_cost:
+          type: decimal
+          minumum: 0
+          maximum: 9999999999.99
+          example: 1499.99
+        locations:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationCount"
+        created:
+          type: string
+          example: "2019-03-27T00:17:07.494727Z"
+          description: "Date the asset was first entered into the system."
+    LocationCount:
+      type: object
+      required:
+      - location
+      - count
+      properties:
+        location:
+          type: string
+          description: "Identifies a particular location.  Locations can be nested.  If the location is nested (has parent location), in a response this nesting may be represented in the location's description, such as 'cafeteria >> kitchen'."
+          example: "kitchen"
+        count:
+          type: integer
+          format: int64
+          minimum: 0
+          description: "Identifies the number of assets counted at the location."
+          example: 1
+        
+          

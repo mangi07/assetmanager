@@ -4,8 +4,8 @@ from .custom_api_exceptions import BadRequestException
 
 class BaseFilter(ABC):
     """Override to create custom filters"""
-    def __init__(self, locations, params):
-        self.locations = locations
+    def __init__(self, items, params):
+        self.items = items
         self.params = params
     
     @abstractmethod
@@ -16,9 +16,8 @@ class BaseFilter(ABC):
         """get filtered queryset using params"""
         # params {"param1":"val1",...}
         for k,v in self.params.items():
-            self.locations = self._filter(k, v, self.locations)
-                
-        return self.locations
+            self.items = self._filter(k, v, self.items)
+        return self.items
     
 
 class LocationFilter(BaseFilter):
@@ -59,7 +58,7 @@ class AssetFilter(BaseFilter):
             return queryset.filter(original_cost__lt=value)
         elif key == "original_cost__gt":
             return queryset.filter(original_cost__gt=value)
-        elif key == "location":
+        elif key == "location":  # TODO: now locations need to be filtered by a list of their ids since location descriptions are no longer unique
             return queryset.filter(count__location__description=value)
         elif key == "cursor":
             return queryset # Allow for pagination
