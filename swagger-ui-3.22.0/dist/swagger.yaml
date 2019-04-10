@@ -30,7 +30,7 @@ paths:
       - name: description__like
         in: query
         required: false
-        description: Filter results that contain the given text.
+        description: Filter results that contain the given text in the description.
         schema:
           type: string
           example: "range"
@@ -76,10 +76,7 @@ paths:
               schema:
                 type: array
                 items:
-                  required:
-                  - description
-                  - original_cost
-                  $ref: "#/components/schemas/AssetResponse"
+                  $ref: "#/components/schemas/PaginatedAssetResponse"
         400:
           description: "Bad request - No assets listed."
         403:
@@ -115,7 +112,7 @@ paths:
     patch:
       tags:
       - "assets"
-      summary: "Bulk update of assets."
+      summary: "Bulk update of assets.  If there are any errors in the request, none of the assets will be updated."
       description: "Updating an asset's location counts is done as a whole.  For example, if one asset has counts at locations A and B and the asset is patched with a list of location counts containing only location C, then the asset will loose its counts at locations A and B and only have a count at location C.  So in order to add a new location count and retain the original counts, you would need to submit the orinal counts in addition to the new one.\n\nAlso, duplicate locations are not allowed."
       requestBody:
         content:
@@ -136,7 +133,7 @@ paths:
           description: "Not found."
         500:
           description: "Internal server error."
-  /asset/{id}:
+  /assets/{id}:
     get:
       tags:
       - "asset"
@@ -261,104 +258,138 @@ paths:
           description: "Not found."
         500:
           description: "Internal server error."
-    
+  /locations:
+    get:
+      tags:
+      - "locations"
+      summary: "Paginated listing of locations with optional filtering in query parameters."
+      parameters:
+      - name: description
+        in: query
+        required: false
+        description: Filter results that contain the exact matching description.
+        schema:
+          type: string
+          example: "kitchen"
+      - name: description__like
+        in: query
+        required: false
+        description: Filter results that contain the given text in the description.
+        schema:
+          type: string
+          example: "kit"
+      responses:
+        200:
+          description: "OK - Successfully listed locations."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedLocationGet"
+        400:
+          description: "Bad request - No locations listed."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+    post:
+      tags:
+      - "locations"
+      summary: "Bulk creation and bulk deletion of locations."
+      description: "A location cannot be deleted if there is an asset at that location.  Nor can two locations with the same description be nested under the same parent location.  TODO: document delete after refactoring to add /locations/bulkDelete/"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/LocationCreate"
+      responses:
+        201:
+          description: "OK - Successfully created locations."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LocationCreateResponse"
+        400:
+          description: "Bad request - No locations created."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+    patch:
+      tags:
+      - "locations"
+      summary: "Bulk update of locations."
+      description: "If there are any errors in the request, none of the locations will be updated."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/LocationUpdate"
+      responses:
+        200:
+          description: "OK - Successfully updated locations."
+          content: {}
+        400:
+          description: "Bad request - No locations updated."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+                
+      
     
 components:
   schemas:
     AssetPatchBulk:
-      type: object
-      required:
-      - id
-      properties:
-        id:
-          type: string
-          example: "000000002"
-        description:
-          type: string
-          example: "4-coil electric range"
-        original_cost:
-          type: decimal
-          minumum: 0
-          maximum: 9999999999.99
-          example: 1499.99
-        locations:
-          type: array
-          items:
-            $ref: "#/components/schemas/LocationCount"
-        created:
-          type: string
-          example: "2019-03-27T00:17:07.494727Z"
-          description: "Date the asset was first entered into the system."
+      allOf:
+        - $ref: "#/components/schemas/AssetParentModel"
+        - type: object
+          required:
+          - id
+          properties:
+            id:
+              type: string
+              example: "000000002"
     AssetPatch:
-      type: object
-      properties:
-        description:
-          type: string
-          example: "4-coil electric range"
-        original_cost:
-          type: decimal
-          minumum: 0
-          maximum: 9999999999.99
-          example: 1499.99
-        locations:
-          type: array
-          items:
-            $ref: "#/components/schemas/LocationCount"
-        created:
-          type: string
-          example: "2019-03-27T00:17:07.494727Z"
-          description: "Date the asset was first entered into the system."
+      allOf:
+        - $ref: "#/components/schemas/AssetParentModel"
+        - type: object
     AssetCreate:
-      type: object
-      required:
-      - description
-      - original_cost
-      properties:
-        description:
-          type: string
-          example: "4-coil electric range"
-        original_cost:
-          type: decimal
-          minumum: 0
-          maximum: 9999999999.99
-          example: 1499.99
-        locations:
-          type: array
-          items:
-            $ref: "#/components/schemas/LocationCount"
-        created:
-          type: string
-          example: "2019-03-27T00:17:07.494727Z"
-          description: "Date the asset was first entered into the system."
+      allOf:
+        - $ref: "#/components/schemas/AssetParentModel"
+        - type: object
+          required:
+          - description
+          - original_cost
     AssetPut:
-      type: object
-      required:
-      - description
-      - original_cost
-      properties:
-        description:
-          type: string
-          example: "4-coil electric range"
-        original_cost:
-          type: decimal
-          minumum: 0
-          maximum: 9999999999.99
-          example: 1499.99
-        locations:
-          type: array
-          items:
-            $ref: "#/components/schemas/LocationCount"
-        created:
-          type: string
-          example: "2019-03-27T00:17:07.494727Z"
-          description: "Date the asset was first entered into the system."
+      allOf:
+        - $ref: "#/components/schemas/AssetParentModel"
+        - type: object
+          required:
+          - description
+          - original_cost
     AssetResponse:
+      allOf:
+        - $ref: "#/components/schemas/AssetParentModel"
+        - type: object
+          required:
+            - description
+            - original_cost
+            - location
+            - created
+    AssetParentModel:
       type: object
-      required:
-      - description
-      - original_cost
-      - locations
-      - created
       properties:
         description:
           type: string
@@ -376,6 +407,7 @@ components:
           type: string
           example: "2019-03-27T00:17:07.494727Z"
           description: "Date the asset was first entered into the system."
+    
     LocationCount:
       type: object
       required:
@@ -392,5 +424,100 @@ components:
           minimum: 0
           description: "Identifies the number of assets counted at the location."
           example: 1
-        
+    
+    LocationUpdate:
+      allOf:
+        - $ref: "#/components/schemas/LocationParentModel"
+        - type: object
+          required:
+            - description
+    LocationGet:
+      allOf:
+        - $ref: "#/components/schemas/LocationParentModel"
+        - type: object
+          required:
+            - id
+            - description
+            - in_location
+            - created
+          properties:
+            id:
+              type: integer
+              minimum: 1
+              example: 40
+    LocationCreate:
+      allOf:
+        - $ref: "#/components/schemas/LocationParentModel"
+        - type: object
+          required:
+            - description
+    LocationCreateResponse:
+      allOf:
+        - $ref: "#/components/schemas/LocationParentModel"
+        - type: object
+          required:
+            - id
+            - description
+            - created
+            - in_location
+            - location_nesting
+          properties:
+            id:
+              type: integer
+              minimum: 1
+              example: 40
+            location_nesting:
+              type: string
+              description: "Represents which parent location this location is nested under."
+              example: "cafeteria >> kitchen"
+    LocationParentModel:
+      type: object
+      properties:
+        description:
+          type: string
+          description: "Identifies a particular location.  Locations can be nested.  If the location is nested (has parent location), in a response this nesting may be represented in the location's description, such as 'cafeteria >> kitchen'."
+          example: "kitchen"
+        in_location:
+          type: string
+          description: "Identifies the parent location where this location is nested.  For example, if the location is 'cafeteria >> kitchen' then the description is 'kitchen' and in_location is 'cafeteria'."
+          example: "cafeteria"
+        created:
+          type: string
+          example: "2019-03-27T00:17:07.494727Z"
+          description: "Date the location was first entered into the system."
+    
+    PaginatedAssetResponse:
+      allOf:
+        - $ref: "#/components/schemas/PaginationModel"
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/LocationGet"
+    PaginatedLocationGet:
+      allOf:
+        - $ref: "#/components/schemas/PaginationModel"
+        - type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: "#/components/schemas/LocationGet"
+    PaginationModel:
+      type: object
+      required:
+      - next
+      - previous
+      - results
+      properties:
+        next:
+          type: string
+          description: "The url for the next set of results."
+          example: "http://localhost:8000/api/v1/locations?cursor=cD0yMDE5LTA0LTEwKzAyJTNBMDklM0EwMC4zNTExNDIlMkIwMCUzQTAw"
+        previous:
+          type: string
+          description: "The url for the previous set of results."
+          example: "http://localhost:8000/api/v1/locations?cursor=cj0xJnA9MjAxOS0wNC0xMCswMiUzQTA5JTNBMDAuMzQyMDY1JTJCMDAlM0EwMA%3D%3D"
+
           

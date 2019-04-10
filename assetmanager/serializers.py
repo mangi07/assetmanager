@@ -96,14 +96,17 @@ class LocationUpdateSerializer(CustomUpdateSerializer):
              assert('description' in loc or 'in_location' in loc)
              if 'description' in loc:
                 str(loc['description'])
-             if 'in_location' in loc:
-                 int(loc['in_location'])
+             if 'in_location' in loc and loc['in_location'] is not None:
+                int(loc['in_location'])
     
-    # TODO: Need to test this!!
+    # TODO: Need to add this to unit tests!! - only tested informally in django browsable api
     def _assign_item_fields(self, loc, update_loc):
         if 'description' in update_loc:
             loc.description = update_loc['description']
         if 'in_location' in update_loc:
+            if update_loc['in_location'] is None:
+                loc.in_location = update_loc['in_location']
+                return
             in_location = Location.objects.filter(
                 pk=int(update_loc['in_location'])
             ).first()

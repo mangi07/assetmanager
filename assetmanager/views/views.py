@@ -57,6 +57,7 @@ class CustomBulkAPIView(CustomPaginator, APIView):
         self.UpdateSerializer = UpdateSerializer # must be a custom UpdateSerializer from serializers.py
     
     # TODO: test pagination and filtering
+    # TODO: order locations by their location nesting
     def get(self, request, format=None):
         params = self.request.query_params # returns {"param1":"val1",...}
         items = self.Item.objects.all()
