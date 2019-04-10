@@ -44,6 +44,7 @@ def api_root(request, format=None):
     return Response({
         'assets': reverse('asset-list', request=request, format=format),
         'locations': reverse('location-list', request=request, format=format),
+        'asset bulk delete': reverse('asset-list-delete', request=request, format=format),
     })
     
 class CustomBulkAPIView(CustomPaginator, APIView):
@@ -146,6 +147,52 @@ class CustomBulkAPIView(CustomPaginator, APIView):
                            status.HTTP_400_BAD_REQUEST)
 
 
+# TODO: api view to bulk remove asset-location associations
+class ListDelete(APIView):
+    """
+    Bulk CRUD on locations
+    """
+    def __init__(self, Item):
+        self.Item = Item # must be a django Model
+    
+    def post(self, request, format=None):
+        if not request.data:
+            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
+        
+        m_err_msg = '.  Expected list of ids to delete: eg: [1,2,3]'
+        json_schema = load_json_schema("list_delete.json")
+        try:
+            validate(request.data, json_schema)
+        except ValidationError as err:
+            msg = err.message + m_err_msg
+            return Response(msg, status.HTTP_400_BAD_REQUEST)
+        
+        if (
+                type(request.data) != list or
+                False in [(lambda id: type(id)==int)(id)
+                    for id in request.data]
+            ):
+            return Response(m_err_msg, status.HTTP_400_BAD_REQUEST)
+            
+        data = request.data
+        
+        # all given ids must exist and all or none of them should be deleted
+        # TODO: maybe look into making this an atomic transaction
+        items = self.Item.objects.filter(pk__in=data)
+
+        if items and len(items) == len(data):
+            try:
+                items.delete()
+            except:
+                return Response("Could not delete items.",
+                                status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(data, status.HTTP_200_OK)
+        else:
+            # TODO: give a more specific response, stating a list of ids that could not be found
+            return Response("One or more of the given item ids could not be found.",
+                           status.HTTP_400_BAD_REQUEST)
+
+
 class AssetDetail(generics.RetrieveUpdateDestroyAPIView):
     #permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     queryset = Asset.objects.all()
@@ -166,10 +213,12 @@ class AssetList(CustomBulkAPIView):
             AssetFilter,
             AssetSerializer,
             AssetUpdateSerializer)
-        
-# TODO: api view to bulk remove asset-location associations
 
-            
-            
-            
-        
+
+class AssetListDelete(ListDelete):
+    def __init__(self):
+        super().__init__(Asset)
+
+
+
+

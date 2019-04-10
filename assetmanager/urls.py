@@ -13,6 +13,7 @@ api_root_path = 'api/v1/'
 urlpatterns = [
     # protected views - authentication should be required
     path(api_root_path + 'assets/', views.AssetList.as_view(), name="asset-list"),
+    path(api_root_path + 'assets/bulkDelete/', views.AssetListDelete.as_view(), name="asset-list-delete"),
     path(api_root_path + 'assets/<int:pk>/', views.AssetDetail.as_view(), name="asset-detail"),
     path(api_root_path + 'locations', views.LocationList.as_view(), name="location-list"),
     path(api_root_path, views.api_root),
