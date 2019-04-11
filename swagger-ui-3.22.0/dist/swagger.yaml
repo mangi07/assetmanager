@@ -346,6 +346,52 @@ paths:
           description: "Not found."
         500:
           description: "Internal server error."
+  /assets/bulkDelete:
+    patch:
+      tags:
+      - "assets"
+      summary: "Bulk deletion of assets."
+      description: "If there are any errors in the request, none of the assets will be deleted."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkDeleteList"
+      responses:
+        200:
+          description: "OK - Successfully deleted assets."
+          content: {}
+        400:
+          description: "Bad request - No assets deleted."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
+  /locations/bulkDelete:
+    patch:
+      tags:
+      - "locations"
+      summary: "Bulk deletion of locations."
+      description: "If there are any errors in the request, none of the locations will be deleted."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkDeleteList"
+      responses:
+        200:
+          description: "OK - Successfully deleted locations."
+          content: {}
+        400:
+          description: "Bad request - No locations deleted."
+        403:
+          description: "Forbidden."
+        404:
+          description: "Not found."
+        500:
+          description: "Internal server error."
                 
       
     
@@ -384,10 +430,15 @@ components:
         - $ref: "#/components/schemas/AssetParentModel"
         - type: object
           required:
-            - description
-            - original_cost
-            - location
-            - created
+          - description
+          - original_cost
+          - location
+          - created
+          properties:
+            created:
+              type: string
+              example: "2019-03-27T00:17:07.494727Z"
+              description: "Date the asset was first entered into the system."
     AssetParentModel:
       type: object
       properties:
@@ -403,17 +454,21 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/LocationCount"
-        created:
-          type: string
-          example: "2019-03-27T00:17:07.494727Z"
-          description: "Date the asset was first entered into the system."
+        
     
     LocationCount:
       type: object
       required:
+      - id
       - location
       - count
       properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: "Location id."
+          example: 40
         location:
           type: string
           description: "Identifies a particular location.  Locations can be nested.  If the location is nested (has parent location), in a response this nesting may be represented in the location's description, such as 'cafeteria >> kitchen'."
@@ -430,7 +485,13 @@ components:
         - $ref: "#/components/schemas/LocationParentModel"
         - type: object
           required:
-            - description
+          - id
+          properties:
+            id:
+              type: integer
+              description: "Unique ID needed to refer to location for updates."
+              minimum: 1
+              example: 40
     LocationGet:
       allOf:
         - $ref: "#/components/schemas/LocationParentModel"
@@ -445,12 +506,16 @@ components:
               type: integer
               minimum: 1
               example: 40
+            location_nesting:
+              type: string
+              description: "Represents which parent location this location is nested under."
+              example: "cafeteria >> kitchen"
     LocationCreate:
       allOf:
         - $ref: "#/components/schemas/LocationParentModel"
         - type: object
           required:
-            - description
+          - description
     LocationCreateResponse:
       allOf:
         - $ref: "#/components/schemas/LocationParentModel"
@@ -475,7 +540,7 @@ components:
       properties:
         description:
           type: string
-          description: "Identifies a particular location.  Locations can be nested.  If the location is nested (has parent location), in a response this nesting may be represented in the location's description, such as 'cafeteria >> kitchen'."
+          description: "Identifies a particular location.  Locations can be nested.  If the location is nested (has parent location), in a response this nesting may be represented in the location's 'location_nesting' property, such as 'cafeteria >> kitchen'."
           example: "kitchen"
         in_location:
           type: string
@@ -494,7 +559,7 @@ components:
             results:
               type: array
               items:
-                $ref: "#/components/schemas/LocationGet"
+                $ref: "#/components/schemas/AssetResponse"
     PaginatedLocationGet:
       allOf:
         - $ref: "#/components/schemas/PaginationModel"
@@ -519,5 +584,12 @@ components:
           type: string
           description: "The url for the previous set of results."
           example: "http://localhost:8000/api/v1/locations?cursor=cj0xJnA9MjAxOS0wNC0xMCswMiUzQTA5JTNBMDAuMzQyMDY1JTJCMDAlM0EwMA%3D%3D"
+          
+    BulkDeleteList:
+      type: array
+      items:
+        type: integer
+        minimum: 0
+        example: 40
 
           

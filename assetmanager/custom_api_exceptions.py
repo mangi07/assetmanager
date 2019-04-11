@@ -14,5 +14,6 @@ class BadRequestException(APIException):
         self.status_code = 400
         self.default_code = 'bad_request'
         super().__init__()
+
         
     

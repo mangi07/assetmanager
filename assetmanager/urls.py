@@ -16,6 +16,7 @@ urlpatterns = [
     path(api_root_path + 'assets/bulkDelete/', views.AssetListDelete.as_view(), name="asset-list-delete"),
     path(api_root_path + 'assets/<int:pk>/', views.AssetDetail.as_view(), name="asset-detail"),
     path(api_root_path + 'locations', views.LocationList.as_view(), name="location-list"),
+    path(api_root_path + 'locations/bulkDelete/', views.LocationListDelete.as_view(), name="location-list-delete"),
     path(api_root_path, views.api_root),
     
     path(api_root_path + 'token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

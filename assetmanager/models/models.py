@@ -3,11 +3,11 @@ from django.utils.timezone import now
 
 
 #   should not create two locations with the same description when both share the same parent location
-#   if location is deleted, all counts with that location will also be deleted
+#   You should not be able to delete a location that is in a count.
 class Location(models.Model):
     description = models.CharField(max_length=200)
     created = models.DateTimeField(default=now, db_index=True)
-    in_location = models.ForeignKey('self', on_delete=models.CASCADE, null=True, default=None, related_name='locations')
+    in_location = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, default=None, related_name='locations')
     
     # prints this location's subnesting.
     # For example, if this location's description is 'room1' in location 'building1'

@@ -24,6 +24,9 @@ from jsonschema import ValidationError
 
 from django.views.generic import TemplateView
 
+from abc import ABC, abstractmethod
+from ..custom_api_exceptions import BadRequestException
+
 # TODO: play around with https://github.com/miki725/django-rest-framework-bulk
 # and consider replacing some code with this
 
@@ -45,6 +48,7 @@ def api_root(request, format=None):
         'assets': reverse('asset-list', request=request, format=format),
         'locations': reverse('location-list', request=request, format=format),
         'asset bulk delete': reverse('asset-list-delete', request=request, format=format),
+        'location bulk delete': reverse('location-list-delete', request=request, format=format),
     })
     
 class CustomBulkAPIView(CustomPaginator, APIView):
@@ -148,13 +152,18 @@ class CustomBulkAPIView(CustomPaginator, APIView):
 
 
 # TODO: api view to bulk remove asset-location associations
-class ListDelete(APIView):
+class ListDelete(ABC, APIView):
     """
-    Bulk CRUD on locations
+    Bulk deletion of items.
     """
     def __init__(self, Item):
         self.Item = Item # must be a django Model
-    
+        
+    @abstractmethod
+    def _validate_post_data(self, request):
+        """should return a response if data is invalid"""
+        pass
+        
     def post(self, request, format=None):
         if not request.data:
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
@@ -173,11 +182,12 @@ class ListDelete(APIView):
                     for id in request.data]
             ):
             return Response(m_err_msg, status.HTTP_400_BAD_REQUEST)
+        
+        self._validate_post_data(request)
             
         data = request.data
         
         # all given ids must exist and all or none of them should be deleted
-        # TODO: maybe look into making this an atomic transaction
         items = self.Item.objects.filter(pk__in=data)
 
         if items and len(items) == len(data):
@@ -185,12 +195,18 @@ class ListDelete(APIView):
                 items.delete()
             except:
                 return Response("Could not delete items.",
-                                status.HTTP_500_INTERNAL_SERVER_ERROR)
+                                status.HTTP_400_BAD_REQUEST)
             return Response(data, status.HTTP_200_OK)
         else:
-            # TODO: give a more specific response, stating a list of ids that could not be found
-            return Response("One or more of the given item ids could not be found.",
-                           status.HTTP_400_BAD_REQUEST)
+            # give a list of ids that could not be found
+            ids = []
+            msg = ""
+            if items:
+                ids = list(set(data).difference([item.id for item in items]))
+                msg = "The following IDs could not be found: " + str(ids)
+            else:
+                msg = "None of the given IDs could be found."
+            return Response(msg, status.HTTP_400_BAD_REQUEST)
 
 
 class AssetDetail(generics.RetrieveUpdateDestroyAPIView):
@@ -218,7 +234,30 @@ class AssetList(CustomBulkAPIView):
 class AssetListDelete(ListDelete):
     def __init__(self):
         super().__init__(Asset)
+        
+    def _validate_post_data(self, request):
+        pass
 
 
-
+class LocationListDelete(ListDelete):
+    def __init__(self):
+        super().__init__(Location)
+        
+    def _validate_post_data(self, request):
+        # determine which assets, if any, have any location counts at the given location ids
+        ids = request.data
+        assets_at_locs = [] # assets containing counts at the given location ids
+        locs = []
+        msg = ""
+        for id in ids:
+            assets = Asset.objects.filter(locations__id=id)
+            if len(assets) > 0:
+                asset_ids = [a.id for a in assets]
+                assets_at_locs.extend(asset_ids)
+                locs.append(id)
+        
+        if len(set(assets_at_locs)) > 0:
+            msg = ("Could not delete any of the locations because location ids " + str(set(locs)) +
+                " are in counts in asset ids " + str(set(assets_at_locs)) + ".")
+            raise BadRequestException({"message": msg})
 

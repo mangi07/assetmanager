@@ -130,7 +130,7 @@ class AssetSerializer(serializers.ModelSerializer):
             count_objs = Count.objects.filter(asset=asset.id)
             for count_obj in count_objs:
                 location = Location.objects.get(pk=count_obj.location.id)
-                count = {'location':location.location_nesting, 'count':count_obj.count}
+                count = {'id':location.id, 'location':location.location_nesting, 'count':count_obj.count}
                 counts_per_location.append(count)
         except:
             raise BadRequestException("Error retrieving location counts in AssetSerializer.")
