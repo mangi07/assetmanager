@@ -297,7 +297,7 @@ paths:
       tags:
       - "locations"
       summary: "Bulk creation and bulk deletion of locations."
-      description: "A location cannot be deleted if there is an asset at that location.  Nor can two locations with the same description be nested under the same parent location.  TODO: document delete after refactoring to add /locations/bulkDelete/"
+      description: "A location cannot be deleted if there is an asset at that location.  Nor can two locations with the same description be nested under the same parent location."
       requestBody:
         content:
           application/json:

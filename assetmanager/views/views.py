@@ -112,43 +112,6 @@ class CustomBulkAPIView(CustomPaginator, APIView):
             serializer = self.Serializer(items, many=True)
             return Response(serializer.data, status.HTTP_200_OK)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
-    
-    
-    def delete(self, request, format=None):
-        if not request.data:
-            return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
-        
-        m_err_msg = '.  Expected list of ids to delete: eg: {"delete":[1,2,3]}'
-        json_schema = load_json_schema("asset_list_delete.json")
-        try:
-            validate(request.data, json_schema)
-        except ValidationError as err:
-            msg = err.message + m_err_msg
-            return Response(msg, status.HTTP_400_BAD_REQUEST)
-        
-        if (
-                not 'delete' in request.data or
-                type(request.data['delete']) != list or
-                False in [(lambda id: type(id)==int)(id)
-                    for id in request.data['delete']]
-            ):
-            return Response(m_err_msg, status.HTTP_400_BAD_REQUEST)
-            
-        data = request.data['delete']
-        
-        # all given ids must exist and all or none of them should be deleted
-        items = self.Item.objects.filter(pk__in=data)
-
-        if items and len(items) == len(data):
-            try:
-                items.delete()
-            except:
-                return Response("Could not delete items.",
-                                status.HTTP_500_INTERNAL_SERVER_ERROR)
-            return Response(data, status.HTTP_200_OK)
-        else:
-            return Response("One or more of the given item ids could not be found.",
-                           status.HTTP_400_BAD_REQUEST)
 
 
 # TODO: api view to bulk remove asset-location associations
