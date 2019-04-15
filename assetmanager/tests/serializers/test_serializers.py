@@ -11,6 +11,8 @@ from ...custom_api_exceptions import BadRequestException
 from jsonschema import validate
 from ..schemas.utils import load_json_schema
 
+from django.contrib.auth.models import User
+
 
 class AssetSerializerTest(TestCase):
     
@@ -123,37 +125,47 @@ class LocationSerializerTest(TestCase):
 class LocationUpdateSerializerTest(TestCase):
     def test_validate_post_data_1(self):
         """Validation should raise BadRequestException on no post data."""
-        ser = LocationUpdateSerializer(data=None, many=True)
+        user = User.objects.create(username='fake user')
+        
+        ser = LocationUpdateSerializer(user, data=None, many=True)
         with self.assertRaises(BadRequestException):
             ser.validate_post_data()
         
         
     def test_validate_post_data_2(self):
         """Validation should raise BadRequestException on wrong JSON format"""
+        user = User.objects.create(username='fake user')
+        
         data = [{"id":1,"desc":"some place"}] # correct key is "description"
-        ser = LocationUpdateSerializer(data=data, many=True)
+        ser = LocationUpdateSerializer(user, data=data, many=True)
         with self.assertRaises(BadRequestException):
             ser.validate_post_data()
     
     
     def test_validate_post_data_3(self):
         """Validation should raise BadRequestException when given jibberish data."""
+        user = User.objects.create(username='fake user')
+        
         data = "jibberish"
-        ser = LocationUpdateSerializer(data=data, many=True)
+        ser = LocationUpdateSerializer(user, data=data, many=True)
         with self.assertRaises(BadRequestException):
             ser.validate_post_data()
     
     
     def test_validate_post_data_4(self):
         """Validation should succeed with correct post data"""
+        user = User.objects.create(username='fake user')
+        
         data = [{"id":1,"description":"some place"}]
-        ser = LocationUpdateSerializer(data=data, many=True)
+        ser = LocationUpdateSerializer(user, data=data, many=True)
         ser.validate_post_data()
     
     
     def test_is_valid_1(self):
         """Validation method should return True when entries are found in the
         database for corresponding post data."""
+        user = User.objects.create(username='fake user')
+        
         # create entries
         locations = Location.objects.bulk_create(
                     [Location(id=1, description="loc 1"),
@@ -164,7 +176,7 @@ class LocationUpdateSerializerTest(TestCase):
                 {"id":2, "description":"some place 2"},
                 {"id":3, "description":"some place 3"}]
         # create serializer
-        ser = LocationUpdateSerializer(data=data, many=True)
+        ser = LocationUpdateSerializer(user, data=data, many=True)
         # set locations on serializer equal to entries
         ser.locations = locations
         # call method under test and assert return value is True
@@ -175,6 +187,8 @@ class LocationUpdateSerializerTest(TestCase):
     def test_is_valid_2(self):
         """Validation method should return False when entries are NOT found in
         the database for corresponding post data."""
+        user = User.objects.create(username='fake user')
+        
         # create entries
         locations = Location.objects.bulk_create(
                     [Location(id=1, description="loc 1"),
@@ -185,7 +199,7 @@ class LocationUpdateSerializerTest(TestCase):
                 {"id":2, "description":"some place 2"},
                 {"id":4, "description":"some place 3"}]
         # create serializer
-        ser = LocationUpdateSerializer(data=data, many=True)
+        ser = LocationUpdateSerializer(user, data=data, many=True)
         # set locations on serializer equal to entries
         ser.locations = locations
         # call method under test and assert return value is False
@@ -195,15 +209,19 @@ class LocationUpdateSerializerTest(TestCase):
     
     def test_is_valid_3(self):
         """is_valid should return false because the location was not found."""
+        user = User.objects.create(username='fake user')
+        
         locations = Location.objects.bulk_create(
                     [Location(id=1, description="some place 1")])
         data = [{"id":100, "description":"updated place 1"}]
-        ser = LocationUpdateSerializer(data=data, many=True)
+        ser = LocationUpdateSerializer(user, data=data, many=True)
         self.assertFalse(ser.is_valid())
         
         
     def test_is_valid_4(self):
         """is_valid should return false because some of the locations were not found."""
+        user = User.objects.create(username='fake user')
+        
         locations = Location.objects.bulk_create(
                     [Location(id=1, description="some place 1"),
                      Location(id=2, description="some place 2"),
@@ -214,14 +232,16 @@ class LocationUpdateSerializerTest(TestCase):
                 {"id":1, "description":"updated place 1"},
                 {"id":3, "description":"updated place 3"},
                 {"id":21, "description":"updated place 1"}]
-        ser = LocationUpdateSerializer(data=data, many=True)
+        ser = LocationUpdateSerializer(user, data=data, many=True)
         self.assertFalse(ser.is_valid())
         
         
     def test_save_1(self):
         """RuntimeError should be raised when no locations are set on the serializer."""
+        user = User.objects.create(username='fake user')
+        
         data = [{"id":1, "description":"some place 1"}]
-        ser = LocationUpdateSerializer(data=data, many=True)
+        ser = LocationUpdateSerializer(user, data=data, many=True)
         self.assertEqual(ser.items, None)
         with self.assertRaises(RuntimeError):
             ser.save()
@@ -229,6 +249,10 @@ class LocationUpdateSerializerTest(TestCase):
         
     def test_save_2(self):
         """Valid data and locations should bulk save correctly."""
+        user = User.objects.create_superuser(username='fake user',
+                                         email='fake@fake.com',
+                                         password='password')
+        
         locations = Location.objects.bulk_create(
                     [Location(id=1, description="some place 1"),
                      Location(id=2, description="some place 2"),
@@ -238,7 +262,7 @@ class LocationUpdateSerializerTest(TestCase):
                 {"id":2, "description":"updated place 2"},
                 {"id":3, "description":"updated place 3"}]
         
-        ser = LocationUpdateSerializer(data=data, many=True)
+        ser = LocationUpdateSerializer(user, data=data, many=True)
         ser.items = locations
         
         ser.save()

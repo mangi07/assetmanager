@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from .tests.schemas.utils import load_json_schema
 from jsonschema import validate
 from . import serializer_utils
+from . import permissions
 
 
 class CustomUpdateSerializer(ABC):
@@ -24,7 +25,8 @@ class CustomUpdateSerializer(ABC):
         """should assign values from dict update_locs to corresponding properties of loc"""
         pass
     
-    def __init__(self, model, serializer, data=None, many=False):
+    def __init__(self, user, model, serializer, data=None, many=False):
+        self.user = user
         self.data=data
         self.many=many
         self.items=None
@@ -64,6 +66,8 @@ class CustomUpdateSerializer(ABC):
         if not self.items:
             raise RuntimeError("save called before is_valid")
         # make dictionary out of data
+        if not permissions.can_update_items(self.Model, self.data, self.user):
+            raise BadRequestException("You do not have permission to perform this save operation.")
         update_items = {}
         for d in self.data:
              update_items[int(d['id'])] = d
@@ -75,7 +79,7 @@ class CustomUpdateSerializer(ABC):
         items = self.Model.objects.filter(pk__in=id_list)
         self.data = self.Serializer(items, many=True).data
 
-# TODO: need to validate outside dp level to prevent duplicate descriptions with no parent locations
+# TODO: need to validate outside db level to prevent duplicate descriptions with no parent locations
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
@@ -85,18 +89,18 @@ class LocationSerializer(serializers.ModelSerializer):
         
 class LocationUpdateSerializer(CustomUpdateSerializer):
     """updates a list of locations"""
-    def __init__(self, data=None, many=False):
-        super().__init__(Location, LocationSerializer, data, many)
+    def __init__(self, user, data=None, many=False):
+        super().__init__(user, Location, LocationSerializer, data, many)
     
     # TODO: Need to test this!!
     def _validate_post_data(self):
         """should raise an exception if data is invalid"""
         for loc in self.data:
-             int(loc['id'])
-             assert('description' in loc or 'in_location' in loc)
-             if 'description' in loc:
+            int(loc['id'])
+            assert('description' in loc or 'in_location' in loc)
+            if 'description' in loc:
                 str(loc['description'])
-             if 'in_location' in loc and loc['in_location'] is not None:
+            if 'in_location' in loc and loc['in_location'] is not None:
                 int(loc['in_location'])
     
     # TODO: Need to add this to unit tests!! - only tested informally in django browsable api
@@ -136,6 +140,13 @@ class AssetSerializer(serializers.ModelSerializer):
             raise BadRequestException("Error retrieving location counts in AssetSerializer.")
         return counts_per_location
     
+    # TODO: override the to_representation method to determine which fields a user may view
+    # TODO: see https://www.django-rest-framework.org/api-guide/serializers/#overriding-serialization-and-deserialization-behavior
+    def to_representation(self, asset):
+        ret = super().to_representation(asset)
+        # TODO: filter allowed values based on permissions
+        return ret
+    
     def to_internal_value(self, data):
         internal_value = super(AssetSerializer, self).to_internal_value(data)
         locations = data.get("locations")
@@ -153,6 +164,7 @@ class AssetSerializer(serializers.ModelSerializer):
     
             
     def create(self, validated_data):
+        # TODO: check that user has permissions to save in permissions.py
         location_data = validated_data.pop('locations')
         asset = Asset.objects.create(**validated_data)
         try:
@@ -164,7 +176,7 @@ class AssetSerializer(serializers.ModelSerializer):
     
     
     def update(self, asset, validated_data):
-        # TODO: refactor out this to use serializer_utils.update_asset
+        # TODO: check that user has permissions to save in permissions.py
         if validated_data['locations']:
             location_data = validated_data.pop('locations')
             serializer_utils.save_asset_locations(asset, location_data)
@@ -179,8 +191,8 @@ class AssetUpdateSerializer(CustomUpdateSerializer):
     """
     updates a list of assets
     """
-    def __init__(self, data=None, many=False):
-        super().__init__(Asset, AssetSerializer, data, many)
+    def __init__(self, user, data=None, many=False):
+        super().__init__(user, Asset, AssetSerializer, data, many)
         
     def _validate_post_data(self):
         """should raise an exception if data is invalid"""

@@ -79,14 +79,6 @@ class CustomBulkAPIView(CustomPaginator, APIView):
         if not request.data:
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
         
-        # TODO: this is a workaround because couldn't figure out how to manipulate
-        # processing of DELETE request in middelware to keep data,
-        # so bulk delete requests have to be made as post requests for now.
-        # TODO: if request post schema for bulk update doesn't validate and 'delete' in data,
-        #   call delete function, else raise an error.
-        if True and 'delete' in request.data:
-            return self.delete(request)
-        
         data = request.data
         serializer = self.Serializer(data=data, many=True)
         if serializer.is_valid():
@@ -101,7 +93,7 @@ class CustomBulkAPIView(CustomPaginator, APIView):
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)
         
         data = request.data
-        serializer = self.UpdateSerializer(data=data, many=True)
+        serializer = self.UpdateSerializer(request.user, data=data, many=True)
         
         if serializer.is_valid():
             serializer.save()
@@ -114,7 +106,6 @@ class CustomBulkAPIView(CustomPaginator, APIView):
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
 
-# TODO: api view to bulk remove asset-location associations
 class ListDelete(ABC, APIView):
     """
     Bulk deletion of items.
@@ -126,7 +117,10 @@ class ListDelete(ABC, APIView):
     def _validate_post_data(self, request):
         """should return a response if data is invalid"""
         pass
-        
+    
+    # TODO: this is a workaround because couldn't figure out how to manipulate
+    # processing of DELETE request in middelware to keep data,
+    # so bulk delete requests have to be made as post requests for now.
     def post(self, request, format=None):
         if not request.data:
             return Response("no data given in request", status.HTTP_400_BAD_REQUEST)

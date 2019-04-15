@@ -54,3 +54,4 @@ class Count(models.Model):
     class Meta:
         unique_together = ('asset', 'location',)
     
+

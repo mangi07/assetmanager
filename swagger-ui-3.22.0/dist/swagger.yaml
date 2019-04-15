@@ -88,7 +88,7 @@ paths:
     post:
       tags:
       - "assets"
-      summary: "Bulk creation and bulk deletion of assets.  TODO: document delete after refactoring to add /assets/bulkDelete/"
+      summary: "Bulk creation of assets."
       requestBody:
         content:
           application/json:
@@ -296,7 +296,7 @@ paths:
     post:
       tags:
       - "locations"
-      summary: "Bulk creation and bulk deletion of locations."
+      summary: "Bulk creation of locations."
       description: "A location cannot be deleted if there is an asset at that location.  Nor can two locations with the same description be nested under the same parent location."
       requestBody:
         content:

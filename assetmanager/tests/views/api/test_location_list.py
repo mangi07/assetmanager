@@ -14,7 +14,7 @@ class LocationListTest(TestCase):
     """Test APIView for listing and creating assets in bulk"""
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username='testuser',
+        self.user = User.objects.create_superuser(username='testuser',
                                          email='fake@fake.com',
                                          password='password')
         self.client.force_login(user=self.user)
