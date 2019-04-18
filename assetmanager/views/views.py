@@ -49,6 +49,9 @@ def api_root(request, format=None):
         'locations': reverse('location-list', request=request, format=format),
         'asset bulk delete': reverse('asset-list-delete', request=request, format=format),
         'location bulk delete': reverse('location-list-delete', request=request, format=format),
+        'obtain token pair': reverse('token-obtain-pair', request=request, format=format),
+        'obtain token refresh': reverse('token-refresh', request=request, format=format),
+        'create user': reverse('create-user', request=request, format=format),
     })
     
 class CustomBulkAPIView(CustomPaginator, APIView):

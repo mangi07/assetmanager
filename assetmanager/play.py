@@ -12,6 +12,18 @@ import requests
 
 #q = requests.delete('http://localhost:8000/api/v1/locations', auth=('admin', 'password'), json=[34])
 
-q = requests.delete('http://localhost:8000/api/v1/assets', auth=('admin', 'password'), json=[24])
+#q = requests.delete('http://localhost:8000/api/v1/assets', auth=('admin', 'password'), json=[24])
 
-print(q.text)
+#print(q.text)
+
+
+result = requests.post('http://localhost:8000/api/v1/token/', data={"username":"regular", "password": "Kanimpabro13."})
+token = result.json()['access']
+result = requests.post('http://localhost:8000/api/v1/user/create/',
+    headers={'Authorization': 'Bearer {}'.format(token)},
+    data={"username": "manager user 2", "password": "123", "confirmPassword": "password",
+        "department": "AV", "user_type": "manager"}
+)
+
+print(result)
+print(result.text)

@@ -32,6 +32,7 @@ ALLOWED_HOSTS = ['mangi07.pythonanywhere.com', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
+    'rest_framework_simplejwt.token_blacklist',
     'assetmanager.apps.AssetmanagerConfig',
     'rest_framework',
     'django.contrib.admin',
@@ -148,4 +149,9 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.CursorPagination',
     'PAGE_SIZE': 5
+}
+
+SIMPLE_JWT = {
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }

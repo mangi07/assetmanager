@@ -140,11 +140,11 @@ class AssetSerializer(serializers.ModelSerializer):
             raise BadRequestException("Error retrieving location counts in AssetSerializer.")
         return counts_per_location
     
-    # TODO: override the to_representation method to determine which fields a user may view
-    # TODO: see https://www.django-rest-framework.org/api-guide/serializers/#overriding-serialization-and-deserialization-behavior
+    # TODO (authorization): override the to_representation method to determine which fields a user may view
+    # TODO (authorization): see https://www.django-rest-framework.org/api-guide/serializers/#overriding-serialization-and-deserialization-behavior
     def to_representation(self, asset):
         ret = super().to_representation(asset)
-        # TODO: filter allowed values based on permissions
+        # TODO (authorization): filter allowed values based on permissions
         return ret
     
     def to_internal_value(self, data):
@@ -164,7 +164,7 @@ class AssetSerializer(serializers.ModelSerializer):
     
             
     def create(self, validated_data):
-        # TODO: check that user has permissions to save in permissions.py
+        # TODO (authorization): check that user has permissions to save in permissions.py
         location_data = validated_data.pop('locations')
         asset = Asset.objects.create(**validated_data)
         try:
@@ -176,7 +176,7 @@ class AssetSerializer(serializers.ModelSerializer):
     
     
     def update(self, asset, validated_data):
-        # TODO: check that user has permissions to save in permissions.py
+        # TODO (authorization): check that user has permissions to save in permissions.py
         if validated_data['locations']:
             location_data = validated_data.pop('locations')
             serializer_utils.save_asset_locations(asset, location_data)

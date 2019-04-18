@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.urls import path
 from assetmanager import views
+from assetmanager.views import user_views
 
 from rest_framework.urlpatterns import format_suffix_patterns
 from rest_framework_simplejwt.views import (
@@ -19,8 +20,9 @@ urlpatterns = [
     path(api_root_path + 'locations/bulkDelete/', views.LocationListDelete.as_view(), name="location-list-delete"),
     path(api_root_path, views.api_root),
     
-    path(api_root_path + 'token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path(api_root_path + 'token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path(api_root_path + 'user/create/', user_views.UserCreate.as_view(), name='create-user'),
+    path(api_root_path + 'token/', TokenObtainPairView.as_view(), name='token-obtain-pair'),
+    path(api_root_path + 'token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
     
     # todo - protect this page !!
     path('home/', views.HomePageView.as_view(), name='home'),
