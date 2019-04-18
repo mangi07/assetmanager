@@ -26,15 +26,15 @@ def can_update_items(model, data, user):
 
 
 
-def can_create_user(user):
+def can_create_user(user, create_type):
     """check whether user can create the type of user given in data"""
     conditions = [
         user.is_superuser,
         
-        (user_type == UserType.MANAGER.val and
+        (create_type == UserType.MANAGER.val and
         user.has_perm('assetmanager.create_manager')),
         
-        (user_type == UserType.REGULAR.val and
+        (create_type == UserType.REGULAR.val and
         user.has_perm('assetmanager.create_regular_user'))
     ]
     return True in conditions
@@ -45,4 +45,4 @@ def set_permissions_group(user, user_type):
     if user_type == UserType.REGULAR.val:
         user.user_permissions.set(['assetmanager.change_location'])
     if user_type == UserType.MANAGER.val:
-        user.user_permissions.set(['assetmanager.create_regular_user'])
+        user.user_permissions.set(['assetmanager.create_regular_user']) # this line causing bug

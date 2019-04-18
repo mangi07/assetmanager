@@ -6,12 +6,7 @@
     "properties": {
         "username": {"type": "string", "minlength": 3},
         "password": {"type": "string", "minlength": 6},
-        "confirmPassword": {
-          "const": {
-            "$data": "1/password"
-          },
-          "type": "string"
-        },
+        "confirmPassword": {"type": "string", "minlength": 6},
         "department": {"type": "string"},
         "user_type": {"type": "string", "enum": ["regular", "manager"]}
     }

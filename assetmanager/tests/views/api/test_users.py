@@ -36,16 +36,17 @@ class CreateUserTest(TestCase):
         USERNAME = "manager user"
         # TODO: confirm password not validating - passes but it shouldn't
         payload = {
-            "username": USERNAME, "password": "123", "confirmPassword": "password",
+            "username": "manager user", "password": "password", "confirmPassword": "password",
             "department": "AV", "user_type": UserType.MANAGER.val
         }
         client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token))
+        #client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
         response = client.post(
                 reverse('create-user'),
                 json.dumps(payload),
                 content_type="application/json"
         )
-        
+        print("DEBUG: GOT HERE")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         
         # query database to see if the user is really there
@@ -81,7 +82,7 @@ class CreateUserTest(TestCase):
         
         # attempt to create manager admin
         payload = {
-            "username": "manager user", "password": "123", "confirmPassword": "password",
+            "username": "manager user", "password": "123", "confirmPassword": "123",
             "department": "AV", "user_type": UserType.MANAGER.val
         }
         client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)

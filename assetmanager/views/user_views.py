@@ -22,12 +22,15 @@ class UserCreate(APIView):
         json_schema = load_json_schema("user_create.json")
         try:
             validate(data, json_schema)
+            # jsonschema not validating property matches, so...
+            if not data['password'] == data['confirmPassword']:
+                raise ValidationError("Password confirmation does not match password.")
         except ValidationError as err:
             print(err.message)
             return Response(err.message, status.HTTP_400_BAD_REQUEST)
         
         # check permissions
-        if not permissions.can_create_user(data['user_type'], request.user):
+        if not permissions.can_create_user(request.user, data['user_type']):
             return Response("You do not have permission to create this type of user.", status.HTTP_403_FORBIDDEN)
         
         user = User.objects.create_user(
@@ -39,7 +42,8 @@ class UserCreate(APIView):
             user=user,
             department=data['department'],
             user_type=data['user_type'])
-        permissions.set_permissions_group(user, user_type)
+        
+        permissions.set_permissions_group(user, data['user_type'])
         
         msg = "<Some representation of successfully created user object here>"
         return Response(msg, status.HTTP_201_CREATED)
