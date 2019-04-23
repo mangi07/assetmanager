@@ -1,41 +1,59 @@
 from django.db import migrations
-#from .models import Asset, Location, Count
-#from .models.user_models import UserType, ExtendedUser
-
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
 
-# TODO: refactor to read in some configuration data to make it more DRY
+class MPermission:
+    def __init__(self, codename, name):
+        self.codename = codename
+        self.name = name
 
-def my_make_permissions(apps, schema_editor):
-    # Get models that we needs them
-    user = apps.get_model("auth", "User")
-    permission = apps.get_model("auth", "Permission")
-    content_type = apps.get_model("contenttypes", "ContentType")
-    # Get user content type object
-    uct = content_type.objects.get_for_model(user)
-    db_alias = schema_editor.connection.alias
-    # Adding your custom permissions to User model:
-    permission.objects.using(db_alias).bulk_create([
-        permission(codename='create_manager', name='Can create a user that is a manager.', content_type=uct),
-        permission(codename='create_regular_user', name='Can create a regular user.', content_type=uct),
-    ])
+
+class MGroup:
+    """Permissions group containing a list of permissions
+    
+    Attributes:
+        name (str): Name of permissions group.
+        permissions (:obj:`list` of :obj:`MPermission`): Permissions in this group.
+    """
+    def __init__(self, name, permissions):
+        self.name = name
+        self.permissions = permissions
+
+
+# TODO: add groups or permissions as needed
+# TODO: read this in from config file shared with other code, such as code that calls has_perm
+groups = [
+    MGroup(
+        "manager",
+        [
+            MPermission("create_manager", "Can create a user that is a manager."),
+        ]
+    ),
+    MGroup(
+        "regular_user",
+        [
+            MPermission("create_regular_user", "Can create a regular user."),
+        ]
+    )
+]
 
     
 def group_permissions(apps, schema_editor):
-    my_make_permissions(apps, schema_editor)
+    user = apps.get_model("auth", "User")
+    permission = apps.get_model("auth", "Permission")
+    content_type = apps.get_model("contenttypes", "ContentType")
+    uct = content_type.objects.get_for_model(user)
+    db_alias = schema_editor.connection.alias
     
-    manager_group, created = Group.objects.get_or_create(name='manager')
-    permission = Permission.objects.get(codename="create_manager")
-    print(permission)
-    manager_group.permissions.add(permission)
-    
-    # TODO: repetitious - needs refactor
-    manager_group, created = Group.objects.get_or_create(name='regular_user')
-    permission = Permission.objects.get(codename="create_regular_user")
-    print(permission)
-    manager_group.permissions.add(permission)
+    for group in groups:
+        g, created = Group.objects.get_or_create(name=group.name)
+        for p in group.permissions:
+            permission.objects.using(db_alias).create(codename=p.codename, name=p.name, content_type=uct)
+            perm = Permission.objects.get(codename=p.codename)
+            # TODO: figure out why these permissions are under 'auth' and not 'assetmanager'
+            # Example: user.has_perm('auth.create_manager')
+            g.permissions.add(perm)
 
 
 class Migration(migrations.Migration):
@@ -48,3 +66,5 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(group_permissions),
     ]
+
+

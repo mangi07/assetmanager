@@ -3,6 +3,7 @@ from django.core.validators import MinLengthValidator
 from django.utils.timezone import now
 from django.contrib.auth.models import User
 from enum import Enum
+from django.contrib.auth.models import AbstractUser
 
 
 class UserType(Enum):
@@ -12,7 +13,6 @@ class UserType(Enum):
     def __init__(self, val, desc):
         self.val = val
         self.desc = desc
-
 
 class ExtendedUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -29,4 +29,4 @@ class ExtendedUser(models.Model):
             ("create_manager", "Can create a user that is a manager."),
             ("create_regular_user", "Can create a regular user."),
         )
-    
+

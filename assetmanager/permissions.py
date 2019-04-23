@@ -1,16 +1,8 @@
 from .models import Asset, Location, Count
 from .models.user_models import UserType, ExtendedUser
 
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
-
-
-# TODO: work on this as script to add permission groups to DB using python manage.py ??
-#manager_group, created = Group.objects.get_or_create(name='manager')
-#permission = Permission.objects.get(codename="create_manager")
-#print(permission)
-#manager_group.permissions.add(permission)
-#exit()
 
 
 # TODO: create permissions for save, update, view, and delete
@@ -39,13 +31,17 @@ def can_create_user(user, create_type):
     ]
     return True in conditions
     
-    
-# TODO: function to add permissions based on user type
+
 def set_permissions_group(user, user_type):
     if user_type == UserType.REGULAR.val:
-        user.user_permissions.set(['assetmanager.change_location'])
+        # TODO: allow regular user to only view some info and possibly change asset locations
+        # Example: user.user_permissions.set(['assetmanager.change_location'])
+        group = Group.objects.get(name="regular_user")
+        user.groups.add(group)
+        assert user.has_perm('auth.create_regular_user')
+        
     if user_type == UserType.MANAGER.val:
-        perm = Permission.objects.get(codename='create_manager')
-        user.user_permissions.add(perm) # this line causing bug
-        print(user.user_permissions.all())
-        assert user.has_perm('assetmanager.create_manager')
+        group = Group.objects.get(name="manager")
+        user.groups.add(group)
+        assert user.has_perm('auth.create_manager')
+
