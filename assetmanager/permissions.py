@@ -24,10 +24,10 @@ def can_create_user(user, create_type):
         user.is_superuser,
         
         (create_type == UserType.MANAGER.val and
-        user.has_perm('assetmanager.create_manager')),
+        user.has_perm('auth.create_regular_user')),
         
         (create_type == UserType.REGULAR.val and
-        user.has_perm('assetmanager.create_regular_user'))
+        user.has_perm('auth.create_regular_user'))
     ]
     return True in conditions
     
@@ -38,10 +38,10 @@ def set_permissions_group(user, user_type):
         # Example: user.user_permissions.set(['assetmanager.change_location'])
         group = Group.objects.get(name="regular_user")
         user.groups.add(group)
-        assert user.has_perm('auth.create_regular_user')
+        assert not user.has_perm('auth.create_regular_user') # maybe remove
         
     if user_type == UserType.MANAGER.val:
         group = Group.objects.get(name="manager")
         user.groups.add(group)
-        assert user.has_perm('auth.create_manager')
+        assert user.has_perm('auth.create_regular_user')
 

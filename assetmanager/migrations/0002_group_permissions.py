@@ -27,20 +27,19 @@ groups = [
     MGroup(
         "manager",
         [
-            MPermission("create_manager", "Can create a user that is a manager."),
+            MPermission("create_regular_user", "Can create a regular user."),
         ]
     ),
     MGroup(
         "regular_user",
         [
-            MPermission("create_regular_user", "Can create a regular user."),
         ]
     )
 ]
 
     
 def group_permissions(apps, schema_editor):
-    user = apps.get_model("auth", "User")
+    user = apps.get_model("auth", "User") # TODO: is this why 'auth.create_manager' and not 'assetmanager.create_manager' ?
     permission = apps.get_model("auth", "Permission")
     content_type = apps.get_model("contenttypes", "ContentType")
     uct = content_type.objects.get_for_model(user)

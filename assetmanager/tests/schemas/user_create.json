@@ -4,7 +4,7 @@
     "required": [ "username", "password", "confirmPassword", "department", "user_type" ],
     "type": "object",
     "properties": {
-        "username": {"type": "string", "minlength": 3},
+        "username": {"type": "string", "minlength": 3, "pattern": "^[a-zA-Z0-9]*$"},
         "password": {"type": "string", "minlength": 6},
         "confirmPassword": {"type": "string", "minlength": 6},
         "department": {"type": "string"},

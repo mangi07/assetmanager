@@ -10,95 +10,222 @@ from ....models.user_models import UserType
 from ....models.user_models import ExtendedUser
 from django.contrib.auth.models import User
 
+from .... import permissions
 
-# TODO: test that all routes that should be protected return 403 for non-authenticated requests
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import Permission
+
+
+# TODO: test that all routes that should be protected return 403 for non-authenticated requests - maybe put this in middleware
 # TODO: only superadmin can create manager and only manager can create regular user
 
 class CreateUserTest(TestCase):
     """Test API for creating users."""
-    def setUp(self):
-        pass
 
-    
-    def test_create_user(self):
-        """Superuser can successfully create manager user."""
-        client = APIClient()
-        superuser = User.objects.create_superuser(username='admin',
+    ###########################################################################
+    ### helper functions
+    def create_user(self, user_type, username, password, department):
+        """Creates user with user_type
+        
+        Args:
+            user_type (:obj:`UserType`): An enum representing the type of user to be created.
+            username (str): User's username.
+            password (str): User's password.
+            department (str): User's department.
+        """
+        user = None
+        if user_type == UserType.SUPER:
+            user = User.objects.create_superuser(username=username,
                                          email='',
-                                         password='password')
-        response = client.post(
-            reverse('token-obtain-pair'),
-            json.dumps({"username": "admin", "password": "password"}),
-            content_type="application/json"
-        )
-        token = json.loads(response.content)['access']
-        
-        USERNAME = "manager user"
-        # TODO: confirm password not validating - passes but it shouldn't
-        payload = {
-            "username": "manager user", "password": "password", "confirmPassword": "password",
-            "department": "AV", "user_type": UserType.MANAGER.val
-        }
-        client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token))
-        #client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
-        response = client.post(
-                reverse('create-user'),
-                json.dumps(payload),
-                content_type="application/json"
-        )
-        print("DEBUG: GOT HERE")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
-        # query database to see if the user is really there
-        user = User.objects.get(username = USERNAME)
-        self.assertIsNotNone(user)
-        
-        manager_user = ExtendedUser.objects.first()
-        self.assertEqual(manager_user.user.username, USERNAME)
-        self.assertEqual(manager_user.department, "AV")
-        self.assertEqual(manager_user.user_type, UserType.MANAGER.val)
+                                         password=password)
+        else:
+            user = User.objects.create_user(username=username,
+                                             email='',
+                                             password=password)
+        extended_user = ExtendedUser.objects.create(user=user,
+                                        department=department,
+                                        user_type=user_type.val)
+                                        
+        permissions.set_permissions_group(user, user_type.val)
 
 
-    def test_user_cannot_create_manageruser(self):
-        """Regular user cannot create manager user."""
-        # create the regular user
-        user = User.objects.create_user(username='regular user',
-                                         email='',
-                                         password='password')
-        regular_user = ExtendedUser.objects.create(user=user,
-                                        department="AV",
-                                        user_type=UserType.REGULAR.val)
+    def create_user_token(self, client, user_type, department):
+        """Creates user with user_type and returns token for that user's subsequent requests
         
-        # obtain access token
-        client = APIClient()
-        response = self.client.post(
+        Args:
+            client (:obj:`APIClient`): The APIClient object used to make requests.
+            user_type (:obj:`UserType`): An enum representing the type of user to be created.
+
+        Returns:
+            str: token
+        """
+        username = 'user'
+        password = 'password'
+        
+        user = self.create_user(user_type, username, password, department)
+        response = client.post(
             reverse('token-obtain-pair'),
             json.dumps(
-                {"username": "regular user", "password": "password"}
+                {"username": username, "password": password}
             ),
             content_type="application/json"
         )
         token = json.loads(response.content)['access']
         
-        # attempt to create manager admin
+        return token
+        
+    
+    def request_user_creation(self, client, user_type, username, token):
+        """Creates user with user_type via another user's token-authenticated request
+        
+        Args:
+            client (:obj:`APIClient`): The APIClient object used to make requests.
+            user_type (:obj:`UserType`): An enum representing the type of user to be created.
+            username (str): User name of user to be created.
+            token (str): Token used to authenticate request.
+
+        Returns:
+            response (:obj:`rest_framework.response.Response`): response indicating success or failure
+        """
         payload = {
-            "username": "manager user", "password": "123", "confirmPassword": "123",
-            "department": "AV", "user_type": UserType.MANAGER.val
+            "username": username, "password": "password", "confirmPassword": "password",
+            "department": "DEFAULT", "user_type": user_type.val
         }
-        client.credentials(HTTP_AUTHORIZATION='Bearer ' + token)
-        response2 = client.post(
+        client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token))
+
+        response = client.post(
                 reverse('create-user'),
                 json.dumps(payload),
                 content_type="application/json"
         )
+        return response
+
+    
+    ###########################################################################
+    ### superuser can create manager and regular user
+    def test_superuser_can_create_manager_user(self):
+        """Superuser can successfully create manager user."""
+        # set up superuser
+        client = APIClient()
+        superuser_department = "DEFAULT"
+        token = self.create_user_token(client, UserType.SUPER, superuser_department)
+        
+        # request manager creation
+        manager_username = "manageruser"
+        response = self.request_user_creation(client, UserType.MANAGER, manager_username, token)
+        
+        # examine created manager user
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # query database to see if the user is really there
+        user = User.objects.get(username = manager_username)
+        self.assertIsNotNone(user)
+        manager_user = ExtendedUser.objects.get(user=user)
+        self.assertEqual(manager_user.user.username, manager_username)
+        self.assertEqual(manager_user.user_type, UserType.MANAGER.val)
+
+    
+    def test_superuser_can_create_regular_user(self):
+        """Superuser can successfully create regular user."""
+        # set up superuser
+        client = APIClient()
+        superuser_department = "DEFAULT"
+        token = self.create_user_token(client, UserType.SUPER, superuser_department)
+        
+        # request regular user creation
+        regular_username = "regularuser"
+        response = self.request_user_creation(client, UserType.REGULAR, regular_username, token)
+        
+        # examine created regular user
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # query database to see if the user is really there
+        user = User.objects.get(username = regular_username)
+        self.assertIsNotNone(user)
+        regular_user = ExtendedUser.objects.get(user=user)
+        self.assertEqual(regular_user.user.username, regular_username)
+        self.assertEqual(regular_user.user_type, UserType.REGULAR.val)
+
+    
+    ###########################################################################
+    ### manager cannot create superuser but can create regular user
+    def test_manager_cannot_create_superuser(self):
+        """Manager user cannot create superuser."""
+        client = APIClient()
+        token = self.create_user_token(client, UserType.MANAGER, "DEFAULT")
+        super_username = "superuser"
+        response = self.request_user_creation(client, UserType.SUPER, super_username, token)
         
         # assertions
-        self.assertEqual(response2.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         # assert that a new user was not created
         self.assertEqual(User.objects.count(), 1)
         self.assertEqual(ExtendedUser.objects.count(), 1)
+
+    
+    def test_manager_can_create_regular_user(self):
+        """Manager can successfully create regular user."""
+        # set up superuser
+        client = APIClient()
+        manager_department = "DEFAULT"
+        token = self.create_user_token(client, UserType.MANAGER, manager_department)
         
+        # request regular user creation
+        regular_username = "regularuser"
+        response = self.request_user_creation(client, UserType.REGULAR, regular_username, token)
         
+        # examine created regular user
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # query database to see if the user is really there
+        user = User.objects.get(username = regular_username)
+        self.assertIsNotNone(user)
+        regular_user = ExtendedUser.objects.get(user=user)
+        self.assertEqual(regular_user.user.username, regular_username)
+        self.assertEqual(regular_user.user_type, UserType.REGULAR.val)
+        
+    
+    ###########################################################################
+    ### user cannot create manager or regular user or superuser
+    def test_regular_user_cannot_create_manageruser(self):
+        """Regular user cannot create manager user."""
+        client = APIClient()
+        token = self.create_user_token(client, UserType.REGULAR, "DEFAULT")
+        regular_username = "regularuser"
+        response = self.request_user_creation(client, UserType.MANAGER, regular_username, token)
+        
+        # assertions
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # assert that a new user was not created
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(ExtendedUser.objects.count(), 1)
+
+
+    def test_regular_user_cannot_create_regular_user(self):
+        """Regular user cannot create regular user."""
+        client = APIClient()
+        token = self.create_user_token(client, UserType.REGULAR, "DEFAULT")
+        regular_username = "regularuser"
+        response = self.request_user_creation(client, UserType.REGULAR, regular_username, token)
+        
+        # assertions
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # assert that a new user was not created
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(ExtendedUser.objects.count(), 1)
+    
+    
+    def test_regular_user_cannot_create_superuser(self):
+        """Regular user cannot create superuser."""
+        client = APIClient()
+        token = self.create_user_token(client, UserType.REGULAR, "DEFAULT")
+        regular_username = "regularuser"
+        response = self.request_user_creation(client, UserType.SUPER, regular_username, token)
+        
+        # assertions
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # assert that a new user was not created
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(ExtendedUser.objects.count(), 1)
+
+
 class LoginUserTest(TestCase):
     """Test API login with JWT token authentication."""
     def setUp(self):

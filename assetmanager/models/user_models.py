@@ -9,6 +9,7 @@ from django.contrib.auth.models import AbstractUser
 class UserType(Enum):
     REGULAR = ("regular", "Regular User")
     MANAGER = ("manager", "Manager")
+    SUPER = ("super", "Super User")
     
     def __init__(self, val, desc):
         self.val = val

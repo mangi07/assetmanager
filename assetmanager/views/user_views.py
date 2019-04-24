@@ -26,8 +26,8 @@ class UserCreate(APIView):
             if not data['password'] == data['confirmPassword']:
                 raise ValidationError("Password confirmation does not match password.")
         except ValidationError as err:
-            print(err.message)
             return Response(err.message, status.HTTP_400_BAD_REQUEST)
+        
         
         # check permissions
         if not permissions.can_create_user(request.user, data['user_type']):
