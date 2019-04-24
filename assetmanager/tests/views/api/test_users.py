@@ -241,10 +241,29 @@ class LoginUserTest(TestCase):
             ),
             content_type="application/json"
         )
-        
-        
+
+
     def test_user_obtain_token(self):
-        """Test username and password can obtain JWT token and refresh from API"""
+        """Test username and password can obtain token and refresh from API"""
+        self.assertEqual(self.response.status_code, status.HTTP_200_OK)
+        token_dict = json.loads(self.response.content)
+        self.assertTrue('access' in token_dict)
+        self.assertTrue('refresh' in token_dict)
+        
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer {}'.format(token_dict['access']))
+        response = self.client.get(
+            reverse('location-list')
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+    def test_user_can_log_out(self):
+        """Test user can log out and blacklist token on server"""
+        # TODO: consider shortening the access token lifespan to a few seconds
+        # test out with real dev server outside this testing framework
+        # ...or switch to basic token authentication provided by django (reduce dependency)
+        
+        # log user in
         self.assertEqual(self.response.status_code, status.HTTP_200_OK)
         token_dict = json.loads(self.response.content)
         self.assertTrue('access' in token_dict)
@@ -256,7 +275,27 @@ class LoginUserTest(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
-
-    # TODO: test user can log in with obtained token
-    
-# TODO: test user can log out and blacklist token on server
+        # log user out
+        from rest_framework_simplejwt.tokens import RefreshToken
+        from rest_framework_simplejwt.tokens import AccessToken
+        from rest_framework_simplejwt.tokens import BlacklistMixin
+        
+        # base64 encoded token string
+        token = RefreshToken(token_dict['refresh'])
+        print(token)
+        print()
+        token.blacklist()
+        
+        class Black(BlacklistMixin, AccessToken):
+            pass
+            
+        token = Black(token_dict['access'])
+        print(token)
+        token.blacklist()
+        token.check_blacklist()
+        
+        # attempt to log in again should fail
+        response = self.client.get(
+            reverse('location-list')
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
