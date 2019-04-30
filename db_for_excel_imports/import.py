@@ -9,34 +9,44 @@
 #   once the corresponding models are created.
 #
 #   Money values are multiplied by 10,000,000,000 for 10 digits of decimal precision
+#
+#   Warning: Once imported, some values could be 'nan' instead of None, so check for both.
 # ###################################################################
 
 import os
 import numpy as np
 import pandas as pd
+import re
 
 # schemas done
 class Manufacturer:
+    def __init__(self, name):
+        self.name = name
     id = None
-    name = None
 class Supplier:
+    def __init__(self, name):
+        self.name = name
     id = None
-    name = None
 class Category:
+    def __init__(self, name):
+        self.name = name
     id = None
-    name = None
 class Requisition:
+    def __init__(self, status):
+        self.status = status
     id = None
-    status = None
 class Receiving:
+    def __init__(self, status):
+        self.status = status
     id = None
-    status = None
 class PurchaseOrder:
+    def __init__(self, number):
+        self.number = number
     id = None
-    number = None
 class Department:
+    def __init__(self, name):
+        self.name = name
     id = None
-    name = None
 
 # schema done
 class User:
@@ -57,28 +67,31 @@ class Asset:
     asset_id = None # DONE
     description = None # DONE
     is_current = None # DONE
-    requisition = None # either null, awaiting invoice, partial payment, paid in full, or donated
-    receiving = None # either null, shipped, received, or placed
-    asset_class1 = None # type
-    asset_class2 = None # specific type
     model_number = None # DONE
     serial_number = None # DONE
-    area = None
-    bulk_count = None # often 1 but several entries are bulk
     date_placed = None # DONE
     date_removed = None # DONE
     date_record_created = None
     date_warranty_expires = None # DONE
-    manufacturer = None
-    supplier = None
     cost = None # what Harvest paid # DONE
     shipping = None # DONE
-    po_number = None # purchase order number
     cost_brand_new = None # DONE
     life_expectancy_years = None
-    notes = None # combine "status" column with this one
-    department = None
-    maint_dir = None # bool whether entered in Maintenance Direct
+    notes = None # combine "status" column with this one # DONE
+    maint_dir = None # bool whether entered in Maintenance Direct # DONE
+    bulk_count = None # often 1 but several entries are bulk # DONE
+    
+    po_number = None # purchase order number                                                        # TODO: turn into FK
+    requisition = None # either null, awaiting invoice, partial payment, paid in full, or donated   # TODO: turn into FK
+    receiving = None # either null, shipped, received, or placed                                    # TODO: turn into FK
+    asset_class1 = None # type                                                                      # TODO: turn into FK
+    asset_class2 = None # specific type                                                             # TODO: turn into FK
+    manufacturer = None                                                                             # TODO: turn into FK
+    supplier = None                                                                                 # TODO: turn into FK
+    department = None                                                                               # TODO: turn into FK
+    
+    area = None
+    
 
 class Account:
     id = None
@@ -160,8 +173,6 @@ df = get_df('input/asset_list.xlsx', 'merge')
 #print(df.loc[:,'asset_id'])
 #print(list(df.columns.values))
 #print(df.loc[:,'asset_id'])
-#blanks = [s for s in current if s != "Current" and s != "Previous"]
-#blanks = [s for s in current if type(s)==float]
 
 
 # #############################################################
@@ -184,8 +195,32 @@ shipping = "SHIPPING COST"
 asset_class1 = "Type"
 asset_class2 = "Specific Type"
 bulk_count = "Bulk Entry Count"
+maint_dir = "Online System (MaintDir or AssetTiger)"
 
 
+# ##############################################################
+# Populate choices
+manufacturers = {key:Manufacturer(key) for key in list(df.loc[:,"Manufacturer"])}
+suppliers = {key:Supplier(key) for key in list(df.loc[:,"Supplier"])}
+categories = {key:Category(key) for key in list(df.loc[:,"Type"])}
+categories.update({key:Category(key) for key in list(df.loc[:,"Specific Type"])})
+departments = {key:Department(key) for key in list(df.loc[:,"Department"])}
+requisitions = {key:Requisition(key) for key in list(df.loc[:,"REQUISITION"])}
+receiving = {key:Receiving(key) for key in list(df.loc[:,"RECEIVING"])}
+
+PO_REGEX = re.compile("PO-[0-9]{6}")
+def get_POs():
+    PO_list = []
+    for val in list(df.loc[:,"Notes"]):
+        po = re.search(PO_REGEX, val)
+        if po:
+            PO_list.append(po.group(0))
+    return PO_list
+purchase_orders = {key:PurchaseOrder(key) for key in get_POs()}
+
+
+# ##############################################################
+# Create assets dictionary - most data read into memory here ?
 def convert_to_dbcurrency(s):
     """takes a str representing money value with optional decimal part"""
     precision = 10
@@ -224,6 +259,34 @@ def populate_asset_from_row(asset, row):
     years = row[life_expectancy_years]
     asset.life_expectancy_years = (lambda y : int(years) if years != "nan" else None)(years)
 
+    mnotes = row[notes]
+    status = row['Status']
+    if (status != "" and status != "nan"):
+        mnotes = mnotes + "  Status: " + status
+    asset.notes = mnotes
+    
+    mmaint_dir = row[maint_dir].lower()
+    asset.maint_dir = (lambda there : 1 if mmaint_dir == "maintdir" else 0)(mmaint_dir)
+    
+    # bulk entries
+    bulk_count = row["Bulk Entry Count"]
+    try:
+        asset.bulk_count = int(bulk_count)
+    except:
+        pass
+    
+    # set PO #s
+    po = re.search(PO_REGEX, row[notes])
+    if po:
+        asset.po_number = po.group(0)
+
+    asset.requisition = row["REQUISITION"]
+    asset.receiving = row["RECEIVING"]
+    asset.asset_class1 = row["Type"]
+    asset.asset_class2 = row["Specific Type"]
+    asset.manufacturer = row["Manufacturer"]
+    asset.supplier = row["Supplier"]
+    asset.department = row["Department"]
     
     return str(key), asset
 
@@ -235,21 +298,104 @@ for index, row in df.iterrows():
         raise Exception
     assets[key] = asset
 
+#from pprint import pprint
+#pprint(vars(assets['mus-67']))
+
+
+# ##############################################################################
+# TODO: take FAR, asset pics, and invoice pics and "OTHER LINKS" from new_cleaning.xlsx
+df2 = get_df('input/new_cleaning.xlsx', 'new_cleaning')
+
+# ######################
+# FAR
+# class Account:
+#     id = None
+#     number = None
+#     description = None
+
+# # schema done
+# class Far:
+#     id = None
+#     account = None
+#     description = None # have a "TODO" account to mark assets that might be added to the FAR in the future
+#     pdf = None
+#     start_date = None # when depreciation starts
+#     life = None # in years
+
+# # schema done
+# class AssetFar: # m2m
+#     id = None
+#     asset = None
+#     far = None # if marked by default entry
+    
+
+not_in_cleaning = 0
+fars = {} # TODO
+accounts = {} # TODO
+asset_fars = {} # TODO
+
+for index, row in df2.iterrows():
+    try:
+        assert(row['Item Number'] in assets)
+    except:
+        print("Asset id in new_cleaning.xlsx needing import because it was not found in asset_list.xlsx: " + row['Item Number'])
+        not_in_cleaning = not_in_cleaning + 1
+        
+    # FAR
+    far = row['FAR']
+    FAR_REGEX = re.compile("[0-9]{5}:([0-9]{1,}|na)")
+    if far != 'nan':
+        fars = far.split(";")
+        for f in fars:
+            # validate
+            try:
+                assert(re.match(FAR_REGEX,f) or f=="TODO" or f=="nan")
+            except:
+                print("far format assertion failed: " + f)
+                exit()
+            # add to farss, accounts, asset_fars
+    #print(far)
+print("Number of assets not in asset_list.xlsx: " + str(not_in_cleaning))
+
+# # schema done
+# class Location:
+#     id = None
+#     description = None
+#     parent = None # reference to other location same table
 #
-#
-# TODO: take FAR, asset pics, and invoice pics from new_cleaning.xlsx
-#
-# TODO: take some other fields (belonging to other tables) and create their objects if they don't exist and add FK to asset object:
-#   example: if asset has "Manufacturer" Goodman, try to find it in list of Manufacture objects.
-#       If it doesn't exist, create the object with name Goodman, set id, and assign this id to manufacturer field of asset object.
-#   The mappings are:
-#       "Manufacturer" --> manufacturer,
-#       "Supplier" --> supplier,
-#       "INVOICE/ORDER/RECEIPT #" and "INVOICE LINK"--> AssetInvoice and Invoice and use first pic with invoice #
-#           but if more than 1 invoice pic, link asset to "TODO" invoice,
-#       "Department" --> department
-#
-#
+# # schema done
+# class LocationCount:
+#     id = None
+#     asset = None
+#     location = None# can be a default location if location is unknown (eg: add missing counts to default location during audit)
+#     count = None # how many of that asset at location
+#     audit_date = None # date last audited
+    
+# # schema done
+# class Invoice:
+#     id = None
+#     number = None
+#     filepath = None
+    
+# # schema done
+# class AssetInvoice: # m2m assets-invoices
+#     id = None
+#     asset = None
+#     invoice = None
+
+# # schema done
+# class Picture:
+#     id = None
+#     filepath = None
+
+# # schema done
+# class AssetPicture:
+#     id = None
+#     asset = None
+#     filepath = None
+
+
+
 # TODO: scan through ./input/asset_list.xlsx and ./input/new_cleaning.xlsx and see if there are any assets yet to be added
 # TODO: import into sqlite db via pandas dataframe
 
