@@ -161,22 +161,34 @@ class Invoice:
     number = None
     filepath = None
     
+    def __str__(self):
+        return "\nInvoice path: " + self.filepath
+    
 # schema done
 class AssetInvoice: # m2m assets-invoices
     id = None
     asset = None
     invoice = None
+    
+    def __str__(self):
+        return "\n~~~AssetInvoice: " + str(self.asset) + str(self.invoice)
 
 # schema done
 class Picture:
     id = None
     filepath = None
+    
+    def __str__(self):
+        return "\n~~~Picture: " + self.filepath + "\n"
 
 # schema done
 class AssetPicture:
     id = None
     asset = None
     filepath = None
+    
+    def __str__(self):
+        return "\n~~~AssetPicture: " + str(self.asset) + str(self.filepath)
 
 
     
@@ -345,6 +357,10 @@ todo_far.pdf = "<none>"
 fars = {"TODO":todo_far} # key is acct:pdf (format: ######:#[#[#]]) # TODO
 accounts = {"TODO":todo_account} # TODO
 asset_fars = [] # TODO
+pictures = {}
+asset_pics = []
+invoices = {}
+asset_invoices = []
 
 FAR_REGEX = re.compile("[0-9]{5}:([0-9]{1,}|na)")
 for index, row in df2.iterrows():
@@ -354,6 +370,8 @@ for index, row in df2.iterrows():
         print("Asset id in new_cleaning.xlsx needing import because it was not found in asset_list.xlsx: " + row['Item Number'])
         not_in_cleaning = not_in_cleaning + 1
         continue
+    asset = assets[row['Item Number']]
+    
     # ###############################
     # FAR
     far = row['FAR']
@@ -371,12 +389,12 @@ for index, row in df2.iterrows():
             if f=="nan":
                 continue
             elif f=="TODO":
-                asset = assets[row['Item Number']]
+                #asset = assets[row['Item Number']]
                 far = fars['TODO']
                 af = AssetFar(asset, far)
                 asset_fars.append(af)
             else:
-                asset = assets[row['Item Number']]
+                #asset = assets[row['Item Number']]
                 # f has format ######:#[#[#]] (acct:pdf)
                 parts = f.split(":")
                 acct = parts[0]
@@ -399,16 +417,48 @@ for index, row in df2.iterrows():
                     asset_fars.append(af)
                     
                         
-            # TODO: Francis sent info about FLC mech. rm. pulley needing realignment because belts causing noise - Make WO ?
     
     # ###############################
     # Asset Pics
     pics = row['Pics']
-    # TODO: convert string rep of list to python list of this asset's picture paths
+    import ast
+    pics_list = ast.literal_eval(pics)
+    for pic in pics_list:
+        if pic not in pictures:
+            p = Picture()
+            p.filepath = pic
+            pictures[pic] = p
+        ap = AssetPicture()
+        ap.asset = asset
+        ap.filepath = p
+        asset_pics.append(ap)
+    
+    # ###############################
+    # Invoices
+    invoice_paths = row['Invoice pics']
+    invoice_list = ast.literal_eval(invoice_paths)
+    for invoice in invoice_list:
+        if invoice not in invoices:
+            i = Invoice()
+            i.filepath = invoice
+            invoices[invoice] = i
+        ai = AssetInvoice()
+        ai.asset = asset
+        ai.invoice = i
+        asset_invoices.append(ai)
 
-
-
-
+    # ###############################
+    # Locations --> First test out the following in separate file
+    #
+    # TODO: get locations and make the tree data structure
+    #
+    # TODO: format to parse:
+    #   [North 3-Story Building >> [111, 109, 108], South 3-Story Building >> [305,  304, 303, 204, 105, 101], Cafeteria Building >> [C101, C103, C105, C106, C104, C107] ]
+    #   [] optional
+    #   location without ':' defaults to count of 1 for that location, otherwise loc:# --> count is # for that loc
+    #   ': shared count' --> leave count blank for that location
+    #
+print(len(assets)) # 5769...but only 5767 assets will be give locations?  TODO: query db once imported to see which ones are missing location counts
 # # schema done
 # class Location:
 #     id = None
@@ -423,28 +473,7 @@ for index, row in df2.iterrows():
 #     count = None # how many of that asset at location
 #     audit_date = None # date last audited
     
-# # schema done
-# class Invoice:
-#     id = None
-#     number = None
-#     filepath = None
-    
-# # schema done
-# class AssetInvoice: # m2m assets-invoices
-#     id = None
-#     asset = None
-#     invoice = None
 
-# # schema done
-# class Picture:
-#     id = None
-#     filepath = None
-
-# # schema done
-# class AssetPicture:
-#     id = None
-#     asset = None
-#     filepath = None
 
 
 
@@ -464,5 +493,14 @@ for index, row in df2.iterrows():
 # print("Number of far entries: " + str(len(fars))) # expected: 76 unique entries
 
 # TEST asset-far associations
-for af in asset_fars:
-    print(af)
+#for af in asset_fars:
+#    print(af)
+
+# TEST asset-picture associations
+#for ap in asset_pics:
+#    print(ap)
+
+# TEST asset-invoice associations
+#for ai in asset_invoices:
+#    print(ai)
+    
