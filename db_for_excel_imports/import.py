@@ -11,6 +11,8 @@
 #   Money values are multiplied by 10,000,000,000 for 10 digits of decimal precision
 #
 #   Warning: Once imported, some values could be 'nan' instead of None, so check for both.
+#
+#   Relationships referenced in python by object rather than by id as in db.
 # ###################################################################
 
 import os
@@ -92,11 +94,21 @@ class Asset:
     
     area = None
     
+    def __str__(self):
+        return "Asset ID " + "'"+str(self.asset_id)+"'"
+    
 
 class Account:
     id = None
     number = None
     description = None
+    
+    def __str__(self):
+        s = "~~~Account~~~\n"
+        s += "Account number: " + self.number + "\n"
+        s += "Account description: " + (self.description if self.description is not None else "<unassigned>")
+        s += "\n\n"
+        return s
 
 # schema done
 class Far:
@@ -106,12 +118,28 @@ class Far:
     pdf = None
     start_date = None # when depreciation starts
     life = None # in years
+    
+    def __str__(self):
+        s = "~~~Far~~~\n"
+        s += ">>>>>Far account\n" + str(self.account) + "\n"
+        s += ">>>>>Far pdf: " + self.pdf
+        s += "\n\n"
+        return s
+
 
 # schema done
 class AssetFar: # m2m
+    def __init__(self, asset, far):
+        self.asset = asset
+        self.far = far
     id = None
-    asset = None
-    far = None # if marked by default entry
+    
+    def __str__(self):
+        s = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+        s += "~~~AssetFar association~~~\n"
+        s += "\n>>>>>Asset\n" + str(self.asset) + "\n"
+        s += "\n>>>>>Far\n" + str(self.far) + "\n"
+        return s
     
 # schema done
 class Location:
@@ -306,56 +334,80 @@ for index, row in df.iterrows():
 # TODO: take FAR, asset pics, and invoice pics and "OTHER LINKS" from new_cleaning.xlsx
 df2 = get_df('input/new_cleaning.xlsx', 'new_cleaning')
 
-# ######################
-# FAR
-# class Account:
-#     id = None
-#     number = None
-#     description = None
-
-# # schema done
-# class Far:
-#     id = None
-#     account = None
-#     description = None # have a "TODO" account to mark assets that might be added to the FAR in the future
-#     pdf = None
-#     start_date = None # when depreciation starts
-#     life = None # in years
-
-# # schema done
-# class AssetFar: # m2m
-#     id = None
-#     asset = None
-#     far = None # if marked by default entry
-    
 
 not_in_cleaning = 0
-fars = {} # TODO
-accounts = {} # TODO
-asset_fars = {} # TODO
+todo_account = Account()
+todo_account.number = "TODO"
+todo_account.description = "Any items linked to this account may need to be added to FAR."
+todo_far = Far()
+todo_far.account = todo_account
+todo_far.pdf = "<none>"
+fars = {"TODO":todo_far} # key is acct:pdf (format: ######:#[#[#]]) # TODO
+accounts = {"TODO":todo_account} # TODO
+asset_fars = [] # TODO
 
+FAR_REGEX = re.compile("[0-9]{5}:([0-9]{1,}|na)")
 for index, row in df2.iterrows():
     try:
         assert(row['Item Number'] in assets)
     except:
         print("Asset id in new_cleaning.xlsx needing import because it was not found in asset_list.xlsx: " + row['Item Number'])
         not_in_cleaning = not_in_cleaning + 1
-        
+        continue
+    # ###############################
     # FAR
     far = row['FAR']
-    FAR_REGEX = re.compile("[0-9]{5}:([0-9]{1,}|na)")
+    
     if far != 'nan':
-        fars = far.split(";")
-        for f in fars:
+        fs = far.split(";")
+        for f in fs:
             # validate
             try:
                 assert(re.match(FAR_REGEX,f) or f=="TODO" or f=="nan")
             except:
                 print("far format assertion failed: " + f)
                 exit()
-            # add to farss, accounts, asset_fars
-    #print(far)
-print("Number of assets not in asset_list.xlsx: " + str(not_in_cleaning))
+            # add to fars, accounts, asset_fars
+            if f=="nan":
+                continue
+            elif f=="TODO":
+                asset = assets[row['Item Number']]
+                far = fars['TODO']
+                af = AssetFar(asset, far)
+                asset_fars.append(af)
+            else:
+                asset = assets[row['Item Number']]
+                # f has format ######:#[#[#]] (acct:pdf)
+                parts = f.split(":")
+                acct = parts[0]
+                pdf = parts[1]
+                if f in fars:
+                    af = AssetFar(asset, fars[f])
+                    asset_fars.append(af)
+                else:
+                    if acct in accounts:
+                        a = accounts[acct]
+                    else:
+                        a = Account()
+                        a.number = acct
+                        accounts[acct] = a
+                    far = Far()
+                    far.account = acct
+                    far.pdf = pdf
+                    fars[f] = far
+                    af = AssetFar(asset, far)
+                    asset_fars.append(af)
+                    
+                        
+            # TODO: Francis sent info about FLC mech. rm. pulley needing realignment because belts causing noise - Make WO ?
+    
+    # ###############################
+    # Asset Pics
+    pics = row['Pics']
+    # TODO: convert string rep of list to python list of this asset's picture paths
+
+
+
 
 # # schema done
 # class Location:
@@ -400,3 +452,17 @@ print("Number of assets not in asset_list.xlsx: " + str(not_in_cleaning))
 # TODO: import into sqlite db via pandas dataframe
 
 
+# ##################################################################################################
+# TEST account results
+# for k,v in accounts.items():
+#    print(v)
+
+# TEST far results
+# for k,v in fars.items():
+#     print(v)
+    
+# print("Number of far entries: " + str(len(fars))) # expected: 76 unique entries
+
+# TEST asset-far associations
+for af in asset_fars:
+    print(af)
