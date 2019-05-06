@@ -19,176 +19,191 @@ import os
 import numpy as np
 import pandas as pd
 import re
+import models
 
-# schemas done
-class Manufacturer:
-    def __init__(self, name):
-        self.name = name
-    id = None
-class Supplier:
-    def __init__(self, name):
-        self.name = name
-    id = None
-class Category:
-    def __init__(self, name):
-        self.name = name
-    id = None
-class Requisition:
-    def __init__(self, status):
-        self.status = status
-    id = None
-class Receiving:
-    def __init__(self, status):
-        self.status = status
-    id = None
-class PurchaseOrder:
-    def __init__(self, number):
-        self.number = number
-    id = None
-class Department:
-    def __init__(self, name):
-        self.name = name
-    id = None
+# # schemas done
+# class Manufacturer:
+#     def __init__(self, name):
+#         self.name = name
+#         self.id = None
+# class Supplier:
+#     def __init__(self, name):
+#         self.name = name
+#         self.id = None
+# class Category:
+#     def __init__(self, name):
+#         self.name = name
+#         self.id = None
+# class Requisition:
+#     def __init__(self, status):
+#         self.status = status
+#         self.id = None
+# class Receiving:
+#     def __init__(self, status):
+#         self.status = status
+#         self.id = None
+# class PurchaseOrder:
+#     def __init__(self, number):
+#         self.number = number
+#         self.id = None
+# class Department:
+#     def __init__(self, name):
+#         self.name = name
+#         self.id = None
 
-# schema done
-class User:
-    id = None
-    name = None
+# # schema done
+# class User:
+#     def __init__(self):
+#         self.id = None
+#         self.name = None
 
-# schema done
-class Checkout:
-    id = None
-    asset = None
-    user = None
-    date_out = None
-    date_in = None
+# # schema done
+# class Checkout:
+#     def __init__(self):
+#         self.id = None
+#         self.asset = None
+#         self.user = None
+#         self.date_out = None
+#         self.date_in = None
 
-# schema done
-class Asset:
-    id = None
-    asset_id = None # DONE
-    description = None # DONE
-    is_current = None # DONE
-    model_number = None # DONE
-    serial_number = None # DONE
-    date_placed = None # DONE
-    date_removed = None # DONE
-    date_record_created = None
-    date_warranty_expires = None # DONE
-    cost = None # what Harvest paid # DONE
-    shipping = None # DONE
-    cost_brand_new = None # DONE
-    life_expectancy_years = None
-    notes = None # combine "status" column with this one # DONE
-    maint_dir = None # bool whether entered in Maintenance Direct # DONE
-    bulk_count = None # often 1 but several entries are bulk # DONE
+# # schema done
+# class Asset:
+#     def __init__(self):
+#         self.id = None
+#         self.asset_id = None # DONE
+#         self.description = None # DONE
+#         self.is_current = None # DONE
+#         self.model_number = None # DONE
+#         self.serial_number = None # DONE
+#         self.date_placed = None # DONE
+#         self.date_removed = None # DONE
+#         self.date_record_created = None
+#         self.date_warranty_expires = None # DONE
+#         self.cost = None # what Harvest paid # DONE
+#         self.shipping = None # DONE
+#         self.cost_brand_new = None # DONE
+#         self.life_expectancy_years = None
+#         self.notes = None # combine "status" column with this one # DONE
+#         self.maint_dir = None # bool whether entered in Maintenance Direct # DONE
+#         self.bulk_count = None # often 1 but several entries are bulk # DONE
+        
+#         self.po_number = None # purchase order number                                                        # TODO: turn into FK
+#         self.requisition = None # either null, awaiting invoice, partial payment, paid in full, or donated   # TODO: turn into FK
+#         self.receiving = None # either null, shipped, received, or placed                                    # TODO: turn into FK
+#         self.asset_class1 = None # type                                                                      # TODO: turn into FK
+#         self.asset_class2 = None # specific type                                                             # TODO: turn into FK
+#         self.manufacturer = None                                                                             # TODO: turn into FK
+#         self.supplier = None                                                                                 # TODO: turn into FK
+#         self.department = None                                                                               # TODO: turn into FK
+        
+#         self.area = None
     
-    po_number = None # purchase order number                                                        # TODO: turn into FK
-    requisition = None # either null, awaiting invoice, partial payment, paid in full, or donated   # TODO: turn into FK
-    receiving = None # either null, shipped, received, or placed                                    # TODO: turn into FK
-    asset_class1 = None # type                                                                      # TODO: turn into FK
-    asset_class2 = None # specific type                                                             # TODO: turn into FK
-    manufacturer = None                                                                             # TODO: turn into FK
-    supplier = None                                                                                 # TODO: turn into FK
-    department = None                                                                               # TODO: turn into FK
-    
-    area = None
-    
-    def __str__(self):
-        return "Asset ID " + "'"+str(self.asset_id)+"'"
+#     def __str__(self):
+#         s = "Asset ID: " + "'"+str(self.asset_id)+"'\n"
+#         s += "Asset Description: " + "'"+str(self.description)+"'\n"
+#         s += "Asset Bulk Count: " + str(self.bulk_count)
+#         return s
     
 
-class Account:
-    id = None
-    number = None
-    description = None
+# class Account:
+#     def __init__(self):
+#         self.id = None
+#         self.number = None
+#         self.description = None
     
-    def __str__(self):
-        s = "~~~Account~~~\n"
-        s += "Account number: " + self.number + "\n"
-        s += "Account description: " + (self.description if self.description is not None else "<unassigned>")
-        s += "\n\n"
-        return s
+#     def __str__(self):
+#         s = "~~~Account~~~\n"
+#         s += "Account number: " + self.number + "\n"
+#         s += "Account description: " + (self.description if self.description is not None else "<unassigned>")
+#         s += "\n\n"
+#         return s
 
-# schema done
-class Far:
-    id = None
-    account = None
-    description = None # have a "TODO" account to mark assets that might be added to the FAR in the future
-    pdf = None
-    start_date = None # when depreciation starts
-    life = None # in years
+# # schema done
+# class Far:
+#     def __init__(self):
+#         self.id = None
+#         self.account = None
+#         self.description = None # have a "TODO" account to mark assets that might be added to the FAR in the future
+#         self.pdf = None
+#         self.start_date = None # when depreciation starts
+#         self.life = None # in years
     
-    def __str__(self):
-        s = "~~~Far~~~\n"
-        s += ">>>>>Far account\n" + str(self.account) + "\n"
-        s += ">>>>>Far pdf: " + self.pdf
-        s += "\n\n"
-        return s
+#     def __str__(self):
+#         s = "~~~Far~~~\n"
+#         s += ">>>>>Far account\n" + str(self.account) + "\n"
+#         s += ">>>>>Far pdf: " + self.pdf
+#         s += "\n\n"
+#         return s
 
+# # schema done
+# class AssetFar: # m2m
+#     def __init__(self, asset, far):
+#         self.asset = asset
+#         self.far = far
+#         self.id = None
+    
+#     def __str__(self):
+#         s = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+#         s += "~~~AssetFar association~~~\n"
+#         s += "\n>>>>>Asset\n" + str(self.asset) + "\n"
+#         s += "\n>>>>>Far\n" + str(self.far) + "\n"
+#         return s
+    
+# # schema done
+# class Location:
+#     def __init__(self):
+#         self.id = None
+#         self.description = None
+#         self.parent = None # reference to other location same table
+#         self.children = {}
+    
+# # schema done
+# class LocationCount:
+#     def __init__(self):
+#         self.id = None
+#         self.asset = None
+#         self.location = None# can be a default location if location is unknown (eg: add missing counts to default location during audit)
+#         self.count = None # how many of that asset at location
+#         self.audit_date = None # date last audited
+    
+# # schema done
+# class Invoice:
+#     def __init__(self):
+#         self.id = None
+#         self.number = None
+#         self.filepath = None
+    
+#     def __str__(self):
+#         return "\nInvoice path: " + self.filepath
+    
+# # schema done
+# class AssetInvoice: # m2m assets-invoices
+#     def __init__(self):
+#         self.id = None
+#         self.asset = None
+#         self.invoice = None
+    
+#     def __str__(self):
+#         return "\n~~~AssetInvoice: " + str(self.asset) + str(self.invoice)
 
-# schema done
-class AssetFar: # m2m
-    def __init__(self, asset, far):
-        self.asset = asset
-        self.far = far
-    id = None
+# # schema done
+# class Picture:
+#     def __init__(self):
+#         self.id = None
+#         self.filepath = None
     
-    def __str__(self):
-        s = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
-        s += "~~~AssetFar association~~~\n"
-        s += "\n>>>>>Asset\n" + str(self.asset) + "\n"
-        s += "\n>>>>>Far\n" + str(self.far) + "\n"
-        return s
-    
-# schema done
-class Location:
-    id = None
-    description = None
-    parent = None # reference to other location same table
-    
-# schema done
-class LocationCount:
-    id = None
-    asset = None
-    location = None# can be a default location if location is unknown (eg: add missing counts to default location during audit)
-    count = None # how many of that asset at location
-    audit_date = None # date last audited
-    
-# schema done
-class Invoice:
-    id = None
-    number = None
-    filepath = None
-    
-    def __str__(self):
-        return "\nInvoice path: " + self.filepath
-    
-# schema done
-class AssetInvoice: # m2m assets-invoices
-    id = None
-    asset = None
-    invoice = None
-    
-    def __str__(self):
-        return "\n~~~AssetInvoice: " + str(self.asset) + str(self.invoice)
+#     def __str__(self):
+#         return "\n~~~Picture: " + self.filepath + "\n"
 
-# schema done
-class Picture:
-    id = None
-    filepath = None
+# # schema done
+# class AssetPicture:
+#     def __init__(self):
+#         self.id = None
+#         self.asset = None
+#         self.filepath = None
     
-    def __str__(self):
-        return "\n~~~Picture: " + self.filepath + "\n"
-
-# schema done
-class AssetPicture:
-    id = None
-    asset = None
-    filepath = None
-    
-    def __str__(self):
-        return "\n~~~AssetPicture: " + str(self.asset) + str(self.filepath)
+#     def __str__(self):
+#         return "\n~~~AssetPicture: " + str(self.asset) + str(self.filepath)
 
 
     
@@ -240,13 +255,13 @@ maint_dir = "Online System (MaintDir or AssetTiger)"
 
 # ##############################################################
 # Populate choices
-manufacturers = {key:Manufacturer(key) for key in list(df.loc[:,"Manufacturer"])}
-suppliers = {key:Supplier(key) for key in list(df.loc[:,"Supplier"])}
-categories = {key:Category(key) for key in list(df.loc[:,"Type"])}
-categories.update({key:Category(key) for key in list(df.loc[:,"Specific Type"])})
-departments = {key:Department(key) for key in list(df.loc[:,"Department"])}
-requisitions = {key:Requisition(key) for key in list(df.loc[:,"REQUISITION"])}
-receiving = {key:Receiving(key) for key in list(df.loc[:,"RECEIVING"])}
+manufacturers = {key:models.Manufacturer(key) for key in list(df.loc[:,"Manufacturer"])}
+suppliers = {key:models.Supplier(key) for key in list(df.loc[:,"Supplier"])}
+categories = {key:models.Category(key) for key in list(df.loc[:,"Type"])}
+categories.update({key:models.Category(key) for key in list(df.loc[:,"Specific Type"])})
+departments = {key:models.Department(key) for key in list(df.loc[:,"Department"])}
+requisitions = {key:models.Requisition(key) for key in list(df.loc[:,"REQUISITION"])}
+receiving = {key:models.Receiving(key) for key in list(df.loc[:,"RECEIVING"])}
 
 PO_REGEX = re.compile("PO-[0-9]{6}")
 def get_POs():
@@ -256,7 +271,7 @@ def get_POs():
         if po:
             PO_list.append(po.group(0))
     return PO_list
-purchase_orders = {key:PurchaseOrder(key) for key in get_POs()}
+purchase_orders = {key:models.PurchaseOrder(key) for key in get_POs()}
 
 
 # ##############################################################
@@ -332,9 +347,10 @@ def populate_asset_from_row(asset, row):
 
 assets = {}
 for index, row in df.iterrows():
-    asset = Asset()
+    asset = models.Asset()
     key, asset = populate_asset_from_row(asset, row)
     if key in assets:
+        print(str(key) + " already exists.")
         raise Exception
     assets[key] = asset
 
@@ -348,10 +364,10 @@ df2 = get_df('input/new_cleaning.xlsx', 'new_cleaning')
 
 
 not_in_cleaning = 0
-todo_account = Account()
+todo_account = models.Account()
 todo_account.number = "TODO"
 todo_account.description = "Any items linked to this account may need to be added to FAR."
-todo_far = Far()
+todo_far = models.Far()
 todo_far.account = todo_account
 todo_far.pdf = "<none>"
 fars = {"TODO":todo_far} # key is acct:pdf (format: ######:#[#[#]]) # TODO
@@ -361,8 +377,12 @@ pictures = {}
 asset_pics = []
 invoices = {}
 asset_invoices = []
+root_location = models.Location()
+root_location.description = "Earth"
 
 FAR_REGEX = re.compile("[0-9]{5}:([0-9]{1,}|na)")
+import ast
+import locations_import
 for index, row in df2.iterrows():
     try:
         assert(row['Item Number'] in assets)
@@ -391,7 +411,7 @@ for index, row in df2.iterrows():
             elif f=="TODO":
                 #asset = assets[row['Item Number']]
                 far = fars['TODO']
-                af = AssetFar(asset, far)
+                af = models.AssetFar(asset, far)
                 asset_fars.append(af)
             else:
                 #asset = assets[row['Item Number']]
@@ -400,20 +420,20 @@ for index, row in df2.iterrows():
                 acct = parts[0]
                 pdf = parts[1]
                 if f in fars:
-                    af = AssetFar(asset, fars[f])
+                    af = models.AssetFar(asset, fars[f])
                     asset_fars.append(af)
                 else:
                     if acct in accounts:
                         a = accounts[acct]
                     else:
-                        a = Account()
+                        a = models.Account()
                         a.number = acct
                         accounts[acct] = a
-                    far = Far()
-                    far.account = acct
+                    far = models.Far()
+                    far.account = a
                     far.pdf = pdf
                     fars[f] = far
-                    af = AssetFar(asset, far)
+                    af = models.AssetFar(asset, far)
                     asset_fars.append(af)
                     
                         
@@ -421,14 +441,13 @@ for index, row in df2.iterrows():
     # ###############################
     # Asset Pics
     pics = row['Pics']
-    import ast
     pics_list = ast.literal_eval(pics)
     for pic in pics_list:
         if pic not in pictures:
-            p = Picture()
+            p = models.Picture()
             p.filepath = pic
             pictures[pic] = p
-        ap = AssetPicture()
+        ap = models.AssetPicture()
         ap.asset = asset
         ap.filepath = p
         asset_pics.append(ap)
@@ -439,58 +458,45 @@ for index, row in df2.iterrows():
     invoice_list = ast.literal_eval(invoice_paths)
     for invoice in invoice_list:
         if invoice not in invoices:
-            i = Invoice()
+            i = models.Invoice()
             i.filepath = invoice
             invoices[invoice] = i
-        ai = AssetInvoice()
+        ai = models.AssetInvoice()
         ai.asset = asset
         ai.invoice = i
         asset_invoices.append(ai)
 
+
+df3 = get_df('input/new_cleaning_locations.xlsx', 'new_cleaning')
+for index, row in df3.iterrows():
     # ###############################
-    # Locations --> First test out the following in separate file
-    #
-    # TODO: get locations and make the tree data structure
-    #
-    # TODO: format to parse:
-    #   [North 3-Story Building >> [111, 109, 108], South 3-Story Building >> [305,  304, 303, 204, 105, 101], Cafeteria Building >> [C101, C103, C105, C106, C104, C107] ]
-    #   [] optional
-    #   location without ':' defaults to count of 1 for that location, otherwise loc:# --> count is # for that loc
-    #   ': shared count' --> leave count blank for that location
-    #
-print(len(assets)) # 5769...but only 5767 assets will be give locations?  TODO: query db once imported to see which ones are missing location counts
-# # schema done
-# class Location:
-#     id = None
-#     description = None
-#     parent = None # reference to other location same table
-#
-# # schema done
-# class LocationCount:
-#     id = None
-#     asset = None
-#     location = None# can be a default location if location is unknown (eg: add missing counts to default location during audit)
-#     count = None # how many of that asset at location
-#     audit_date = None # date last audited
+    # Locations
+    # TODO: print out that module's location_counts
+    locs_str = row['db_location']
+    asset = assets[row['Item Number']]
+    root_location = locations_import.parse_locations(asset, locs_str, root_location)
+
     
+print(len(assets)) # 5770...but only 5767 assets will be give locations?  TODO: query db once imported to see which ones are missing location counts
 
-
-
-
-# TODO: scan through ./input/asset_list.xlsx and ./input/new_cleaning.xlsx and see if there are any assets yet to be added
 # TODO: import into sqlite db via pandas dataframe
 
 
 # ##################################################################################################
+# TEST asset results
+#for k,v in assets.items():
+#    print("\n################################################################")
+#    print(v)
+
 # TEST account results
-# for k,v in accounts.items():
+#for k,v in accounts.items():
 #    print(v)
 
 # TEST far results
-# for k,v in fars.items():
-#     print(v)
+#for k,v in fars.items():
+#    print(v)
     
-# print("Number of far entries: " + str(len(fars))) # expected: 76 unique entries
+#print("Number of far entries: " + str(len(fars))) # expected: 76 unique entries
 
 # TEST asset-far associations
 #for af in asset_fars:
@@ -503,4 +509,10 @@ print(len(assets)) # 5769...but only 5767 assets will be give locations?  TODO: 
 # TEST asset-invoice associations
 #for ai in asset_invoices:
 #    print(ai)
-    
+
+# TEST locations
+#locations_import.print_locations(root_location, 0)
+for loc_count in locations_import.location_counts:
+    if loc_count.asset.bulk_count is not None:
+        print("\n#################################")
+        print(str(loc_count))
