@@ -1,40 +1,80 @@
-# schemas done
+# done
 class Manufacturer:
     def __init__(self, name):
         self.name = name
         self.id = None
+    def list_vals(self):
+        return [self.id, self.name]
+    def list_column_names():
+        return ["id", "name"]
+        
+# done
 class Supplier:
     def __init__(self, name):
         self.name = name
         self.id = None
+    def list_vals(self):
+        return [self.id, self.name]
+    def list_column_names():
+        return ["id", "name"]
+        
+# done
 class Category:
     def __init__(self, name):
         self.name = name
         self.id = None
+    def list_vals(self):
+        return [self.id, self.name]
+    def list_column_names():
+        return ["id", "name"]
+        
+# done
 class Requisition:
     def __init__(self, status):
         self.status = status
         self.id = None
+    def list_vals(self):
+        return [self.id, self.status]
+    def list_column_names():
+        return ["id", "status"]
+        
+# done
 class Receiving:
     def __init__(self, status):
         self.status = status
         self.id = None
+    def list_vals(self):
+        return [self.id, self.status]
+    def list_column_names():
+        return ["id", "status"]
+        
+# done
 class PurchaseOrder:
     def __init__(self, number):
         self.number = number
         self.id = None
+    def list_vals(self):
+        return [self.id, self.number]
+    def list_column_names():
+        return ["id", "number"]
+        
+# done
 class Department:
     def __init__(self, name):
         self.name = name
         self.id = None
+    def list_vals(self):
+        return [self.id, self.name]
+    def list_column_names():
+        return ["id", "name"]
 
-# schema done
+
 class User:
     def __init__(self):
         self.id = None
         self.name = None
 
-# schema done
+
 class Checkout:
     def __init__(self):
         self.id = None
@@ -43,7 +83,7 @@ class Checkout:
         self.date_out = None
         self.date_in = None
 
-# schema done
+
 class Asset:
     def __init__(self):
         self.id = None
@@ -80,6 +120,59 @@ class Asset:
         s += "Asset Description: " + "'"+str(self.description)+"'\n"
         s += "Asset Bulk Count: " + str(self.bulk_count) + "\n"
         return s
+    
+    def list_vals(self):
+        return [self.id,
+                self.asset_id,
+                self.description,
+                self.is_current,
+                self.requisition,
+                self.receiving,
+                self.asset_class1,
+                self.asset_class2,
+                self.model_number,
+                self.serial_number,
+                self.bulk_count if self.bulk_count is not None else 1,
+                self.date_placed,
+                self.date_removed,
+                self.date_warranty_expires,
+                self.manufacturer,
+                self.supplier,
+                self.cost,
+                self.shipping,
+                self.po_number,
+                self.cost_brand_new,
+                self.life_expectancy_years,
+                self.notes,
+                self.department,
+                self.maint_dir]
+
+    
+    def list_column_names():
+        return ["id",
+                "asset_id",
+                "description",
+                "is_current",
+                "requisition",
+                "receiving",
+                "category_1",
+                "category_2",
+                "model_number",
+                "serial_number",
+                "bulk_count",
+                "date_placed",
+                "date_removed",
+                "date_warranty_expires",
+                "manufacturer",
+                "supplier",
+                "cost",
+                "shipping",
+                "purchase_order",
+                "cost_brand_new",
+                "life_expectancy_years",
+                "notes",
+                "department",
+                "maint_dir"]
     
 
 class Account:

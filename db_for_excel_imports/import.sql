@@ -83,10 +83,10 @@ CREATE TABLE IF NOT EXISTS "asset"
     [date_warranty_expires] TEXT,
     [manufacturer] INTEGER, -- foreign key to manufacturer
     [supplier] INTEGER, -- foreign key to supplier
-    [cost] INTEGER, -- what Harvest paid, stored as actual cost * 100 (eg: $13.29 stored as 1329)
-    [shipping] INTEGER, -- cost of shipping, stored as actual shipping cost * 100
+    [cost] INTEGER, -- what Harvest paid, stored as actual cost * 10000000000 (eg: $13.29 stored as 132900000000)
+    [shipping] INTEGER, -- cost of shipping, stored as actual shipping cost * 10000000000
     [purchase_order] INTEGER, -- foreign key to purchase_order
-    [cost_brand_new] INTEGER, -- brand new cost, stored as actual * 100
+    [cost_brand_new] INTEGER, -- brand new cost, stored as actual * 10000000000
     [life_expectancy_years] INTEGER,
     [notes] TEXT, -- combine "status" column with this one
     [department] INTEGER, -- foreign key to department
@@ -220,3 +220,8 @@ CREATE TABLE IF NOT EXISTS "asset_picture"
       ON DELETE CASCADE ON UPDATE NO ACTION
 );
 
+
+-- set up requisition lookup table
+insert into requisition (status) values ('awaiting invoice'),('partial payment'),('paid in full'),('donated');
+
+insert into receiving (status) values ('shipped'), ('received'), ('placed');
