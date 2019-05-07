@@ -1,4 +1,4 @@
-import load_excell as imports
+import load_excel as imports
 import models
 import sqlite3
 import sys # for sys.exit()
@@ -36,9 +36,8 @@ def set_ids(items_list):
 def insert_items(table_name, items, clazz, cursor):
     set_ids(items)
     mlists = [item.list_vals() for item in items]
-    for mlist in mlists:
-        mlist = [None if x=="nan" else x for x in mlists]
-        #print(mlists)
+    for i, mlist in enumerate(mlists):
+        mlists[i] = [None if x=="nan" else x for x in mlist]
     column_names = clazz.list_column_names()
     insert_from_lists(mlists, column_names, table_name, cursor)
 
@@ -70,7 +69,7 @@ for asset in assets_list:
     elif asset.requisition == "donated":
         asset.requisition = 4
     else:
-        asset.requisition = "NULL"
+        asset.requisition = None
     # receiving
     if asset.receiving == "shipped":
         asset.receiving = 1
@@ -79,7 +78,7 @@ for asset in assets_list:
     elif asset.receiving == "placed":
         asset.receiving = 3
     else:
-        asset.receiving = "NULL"
+        asset.receiving = None
     # others
     set_key(asset.po_number, imports.purchase_orders)
     set_key(asset.asset_class1, imports.categories)
