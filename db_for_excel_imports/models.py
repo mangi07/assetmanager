@@ -187,6 +187,12 @@ class Account:
         s += "Account description: " + (self.description if self.description is not None else "<unassigned>")
         s += "\n\n"
         return s
+        
+    def list_vals(self):
+        return [self.id, self.number, self.description]
+    def list_column_names():
+        return ["id", "number", "description"]
+
 
 # schema done
 class Far:
@@ -204,6 +210,11 @@ class Far:
         s += ">>>>>Far pdf: " + self.pdf
         s += "\n\n"
         return s
+    
+    def list_vals(self):
+        return [self.id, self.account, self.description, self.pdf, self.life, self.start_date]
+    def list_column_names():
+        return ["id", "account", "description", "pdf", "life", "start_date"]
 
 # schema done
 class AssetFar: # m2m
@@ -219,6 +230,12 @@ class AssetFar: # m2m
         s += "\n>>>>>Far\n" + str(self.far) + "\n"
         return s
     
+    def list_vals(self):
+        return [self.id, self.account, self.description, self.pdf, self.life, self.start_date]
+    def list_column_names():
+        return ["id", "account", "description", "pdf", "life", "start_date"]
+
+
 # schema done
 class Location:
     def __init__(self):
@@ -231,7 +248,13 @@ class Location:
         if self.parent is None:
             return self.description
         return str(self.parent) + " >> " + str(self.description) # recursion expands this string
-    
+
+    def list_vals(self):
+        return [self.id, self.description, self.parent]
+    def list_column_names():
+        return ["id", "description", "parent"]
+
+
 # schema done
 class LocationCount:
     def __init__(self):
@@ -244,6 +267,12 @@ class LocationCount:
     def __str__(self):
         return "\n~~~LocationCount: " + str(self.asset) + str(self.location) + "\nCount: " + str(self.count)
     
+    def list_vals(self):
+        return [self.id, self.asset, self.location, self.count, self.audit_date]
+    def list_column_names():
+        return ["id", "asset", "location", "count", "audit_date"]
+
+
 # schema done
 class Invoice:
     def __init__(self):
@@ -272,6 +301,12 @@ class Picture:
     
     def __str__(self):
         return "\n~~~Picture: " + self.filepath + "\n"
+    
+    def list_vals(self):
+        return [self.id, self.filepath]
+    def list_column_names():
+        return ["id", "file_path"]
+   
 
 # schema done
 class AssetPicture:

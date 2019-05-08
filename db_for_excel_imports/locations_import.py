@@ -54,7 +54,7 @@ locs_test = "[North 3-Story Building >> [111, 109, 108: 2], South 3-Story Buildi
 locs_test2 = "[North 3-Story Building >> [111, 109, 108, 107], South 3-Story Building >> [305,  304, 303, 204, 105, 101], Cafeteria Building >> [C101, C103, C105, C106, C104, C107] ]"
 # also test with loc:# and loc:shared count (leave count field blank if "shared count")
 location_counts = [] # associating assets and locations, with asset count per location
-
+locations = [] # used in insert_sql.py sql insert
 
 def get_count(buff_str):
     s = buff_str.split(':')
@@ -66,6 +66,7 @@ def get_count(buff_str):
         return s[0], 1
 
 
+# add location
 def add_loc_count(asset, loc, count):
     loc_count = models.LocationCount()
     loc_count.asset = asset
@@ -74,6 +75,7 @@ def add_loc_count(asset, loc, count):
     location_counts.append(loc_count)
 
 
+# add count at that location
 def add_buffer(asset, buff, curr_loc):
     buff_str = ''.join(buff).strip()
     buff_str, count = get_count(buff_str)
@@ -83,6 +85,7 @@ def add_buffer(asset, buff, curr_loc):
         loc.description = buff_str
         loc.parent = curr_loc
         curr_loc.children[buff_str] = loc
+        locations.append(loc)
     else:
         # find buff_str location in parent
         loc = curr_loc.children[buff_str]

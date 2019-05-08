@@ -64,6 +64,8 @@ categories.update({key:models.Category(key) for key in list(df.loc[:,"Specific T
 departments = {key:models.Department(key) for key in list(df.loc[:,"Department"])}
 requisitions = {key:models.Requisition(key) for key in list(df.loc[:,"REQUISITION"])}
 receiving = {key:models.Receiving(key) for key in list(df.loc[:,"RECEIVING"])}
+for d in [manufacturers, suppliers, categories, departments, requisitions, receiving]:
+    d.pop("nan", None)
 
 PO_REGEX = re.compile("PO-[0-9]{6}")
 def get_POs():

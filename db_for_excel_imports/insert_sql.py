@@ -1,7 +1,9 @@
 import load_excel as imports
+import locations_import
 import models
 import sqlite3
 import sys # for sys.exit()
+
 
 
 def insert_message(table, statement):
@@ -20,8 +22,7 @@ def insert_from_lists(mlists, column_names, mtable, mcursor):
     insert = "INSERT INTO {} ({}) VALUES {}".format(mtable, columns_str, params)
     vals = [tuple(vals_list) for vals_list in mlists]
     
-    insert_message(mtable, str(vals))
-    
+    #insert_message(mtable, str(vals))
     cursor.executemany(insert, vals);
     conn.commit()
 
@@ -34,7 +35,8 @@ def set_ids(items_list):
 
 
 def insert_items(table_name, items, clazz, cursor):
-    set_ids(items)
+    if None in items:
+        set_ids(items)
     mlists = [item.list_vals() for item in items]
     for i, mlist in enumerate(mlists):
         mlists[i] = [None if x=="nan" else x for x in mlist]
@@ -45,19 +47,28 @@ def insert_items(table_name, items, clazz, cursor):
 conn = sqlite3.connect('assetsdb.sqlite3')
 cursor = conn.cursor()
 
-# done, so commented out
-#insert_items("manufacturer", imports.manufacturers.values(), models.Manufacturer, cursor)
-#insert_items("supplier", imports.suppliers.values(), models.Supplier, cursor)
-#insert_items("category", imports.categories.values(), models.Category, cursor)
-#insert_items("department", imports.departments.values(), models.Department, cursor)
-#insert_items("purchase_order", imports.purchase_orders.values(), models.PurchaseOrder, cursor)
 
+insert_items("manufacturer", imports.manufacturers.values(), models.Manufacturer, cursor)
+insert_items("supplier", imports.suppliers.values(), models.Supplier, cursor)
+insert_items("category", imports.categories.values(), models.Category, cursor)
+insert_items("department", imports.departments.values(), models.Department, cursor)
+insert_items("purchase_order", imports.purchase_orders.values(), models.PurchaseOrder, cursor)
+
+
+
+#####################################################################################
 # now we can insert assets that have foreign keys to the items we just inserted above
-assets_list = imports.assets.values()
-def set_key(asset_field, lookup):
-    if asset_field in lookup:
-        asset_field = lookup[asset_field].id
+
+def get_fk(field, lookup):
+    if field is not None and field != "nan" and field in lookup:
+        id = lookup[field].id
+        assert(isinstance(id, int))
+        return id
+    else:
+        return None
+
 # set foreign keys
+assets_list = imports.assets.values()
 for asset in assets_list:
     # requisition
     if asset.requisition == "awaiting invoice":
@@ -79,27 +90,64 @@ for asset in assets_list:
         asset.receiving = 3
     else:
         asset.receiving = None
-    # others
-    set_key(asset.po_number, imports.purchase_orders)
-    set_key(asset.asset_class1, imports.categories)
-    set_key(asset.asset_class1, imports.categories)
-    set_key(asset.manufacturer, imports.manufacturers)
-    set_key(asset.supplier, imports.suppliers)
-    set_key(asset.department, imports.departments)
+    # setting foreign keys for the remaining asset fields
+    asset.po_number = get_fk(asset.po_number, imports.purchase_orders)
+    asset.asset_class1 = get_fk(asset.asset_class1, imports.categories)
+    asset.asset_class2 = get_fk(asset.asset_class1, imports.categories)
+    asset.manufacturer = get_fk(asset.manufacturer, imports.manufacturers)
+    asset.supplier = get_fk(asset.supplier, imports.suppliers)
+    asset.department = get_fk(asset.department, imports.departments)
     
+    assert(isinstance(asset.po_number, int) or asset.po_number is None)
+    assert(isinstance(asset.asset_class1, int) or asset.asset_class1 is None)
+    assert(isinstance(asset.asset_class2, int) or asset.asset_class2 is None)
+    assert(isinstance(asset.manufacturer, int) or asset.manufacturer is None)
+    assert(isinstance(asset.supplier, int) or asset.supplier is None)
+    assert(isinstance(asset.department, int) or asset.department is None)
+    
+
 insert_items("asset", imports.assets.values(), models.Asset, cursor)
 
 
+
+##########################################################################################################
+# now that we have assets inserted, we can insert rows involving m2m relationships in the remaining tables
+# Overview:
+#
+# account
+# far
+# invoice
+# picture
+# location
+#
+# asset_far
+# asset_invoice
+# asset_picture
+# location_count
+
+insert_items("account", imports.accounts.values(), models.Account, cursor)
+insert_items("far", imports.fars.values(), models.Far, cursor)
+insert_items("picture", imports.pictures.values(), models.Picture, cursor)
+insert_items("location", imports.locations.values(), models.Location, cursor)
+
+locations = locations_import.locations
+location_counts = location_import.location_counts
+
+# TODO: convert objs to fks: location.parent, location_count.asset & location_count.location
+set_ids(locations)
+for location in locations:
+    location.parent = location.parent.id
+insert_items("location", locations, models.Location, cursor)
+
+for lc in location_counts:
+    lc.asset = lc.asset.id
+    lc.location = lc.location.id
+insert_items("location_count", location_counts, models.LocationCount, cursor)
 
 conn.close()
 
 
 
-# ##################################################################################################
-# TEST asset results
-#for k,v in imports.assets.items():
-#    print("\n################################################################")
-#    print(v)
 
 # TEST account results
 #for k,v in accounts.items():
@@ -132,7 +180,6 @@ conn.close()
 
 
 """
-assets = {}
 todo_account # any items linked to this account may need to be added to FAR
 todo_far # any items lnkted to this far may need to be added to FAR
 fars = {"TODO":todo_far} # key is acct:pdf (format: ######:#[#[#]]) # TODO
