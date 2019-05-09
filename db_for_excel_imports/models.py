@@ -212,9 +212,9 @@ class Far:
         return s
     
     def list_vals(self):
-        return [self.id, self.account, self.description, self.pdf, self.life, self.start_date]
+        return [self.id, self.account, self.description, self.pdf, self.life]
     def list_column_names():
-        return ["id", "account", "description", "pdf", "life", "start_date"]
+        return ["id", "account", "description", "pdf", "life"]
 
 # schema done
 class AssetFar: # m2m

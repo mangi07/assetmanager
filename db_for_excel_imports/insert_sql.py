@@ -35,7 +35,7 @@ def set_ids(items_list):
 
 
 def insert_items(table_name, items, clazz, cursor):
-    if None in items:
+    if False in [isinstance(i, int) for i in items]:
         set_ids(items)
     mlists = [item.list_vals() for item in items]
     for i, mlist in enumerate(mlists):
@@ -125,24 +125,34 @@ insert_items("asset", imports.assets.values(), models.Asset, cursor)
 # asset_picture
 # location_count
 
+
 insert_items("account", imports.accounts.values(), models.Account, cursor)
+for far in imports.fars.values():
+    far.account = far.account.id
+    assert(isinstance(far.account, int))
 insert_items("far", imports.fars.values(), models.Far, cursor)
 insert_items("picture", imports.pictures.values(), models.Picture, cursor)
-insert_items("location", imports.locations.values(), models.Location, cursor)
 
-locations = locations_import.locations
-location_counts = location_import.location_counts
 
-# TODO: convert objs to fks: location.parent, location_count.asset & location_count.location
-set_ids(locations)
-for location in locations:
-    location.parent = location.parent.id
-insert_items("location", locations, models.Location, cursor)
+print(len(imports.locations)) # debug
+print(len(imports.location_counts)) # debug
+insert_items("location", imports.locations, models.Location, cursor)
+for loc_count in imports.location_counts:
+    print("asset: " + loc_count.asset.asset_id) # debug
+    loc_count.asset = loc_count.asset.id
+    loc_count.location = loc_count.location.id
+insert_items("location_count", imports.location_counts, models.LocationCount, cursor)
 
+
+"""
 for lc in location_counts:
     lc.asset = lc.asset.id
-    lc.location = lc.location.id
+    print(lc.asset)
+    lc.location = lc.location.id    # TODO: bug: sometimes lc.location.id is None
+    assert(isinstance(lc.asset, int))
+    assert(isinstance(lc.location, int))
 insert_items("location_count", location_counts, models.LocationCount, cursor)
+"""
 
 conn.close()
 
@@ -170,13 +180,6 @@ conn.close()
 # TEST asset-invoice associations
 #for ai in asset_invoices:
 #    print(ai)
-
-# TEST locations
-#locations_import.print_locations(root_location, 0)
-#for loc_count in locations_import.location_counts:
-#    if loc_count.asset.bulk_count is not None:
-#        print("\n#################################")
-#        print(str(loc_count))
 
 
 """

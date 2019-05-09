@@ -32,7 +32,35 @@ insert into category (name) values ('category2');
 update asset set category_2=1 where id=1;
 
 -- select asset and include multiple related fields
-select asset.asset_id, asset.description, cat1.name, cat2.name from asset
-  inner join category cat1 on asset.category_1 = cat1.id
-  inner join category cat2 on asset.category_2 = cat2.id;
-  
+select asset.asset_id, asset.description, cat1.name as cat1, cat2.name as cat2 from asset
+  left join category cat1 on asset.category_1 = cat1.id
+  left join category cat2 on asset.category_2 = cat2.id;
+
+-- -----------------------
+-- reset tables --
+-- -----------------------
+delete from asset;
+delete from account;
+delete from asset_far;
+delete from asset_invoice;
+delete from asset_picture;
+delete from checkout;
+delete from category;
+delete from department;
+delete from far;
+delete from invoice;
+delete from location;
+delete from location_count;
+delete from manufacturer;
+delete from picture;
+delete from purchase_order;
+delete from receiving;
+delete from requisition;
+delete from sqlite_sequence;
+delete from supplier;
+delete from user;
+
+-- set up requisition lookup table
+insert into requisition (status) values ('awaiting invoice'),('partial payment'),('paid in full'),('donated');
+
+insert into receiving (status) values ('shipped'), ('received'), ('placed');

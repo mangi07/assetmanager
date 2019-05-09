@@ -276,7 +276,11 @@ for index, row in df3.iterrows():
     locs_str = row['db_location']
     asset = assets[row['Item Number']]
     root_location = locations_import.parse_locations(asset, locs_str, root_location)
-
+root_location.id = 1
+locations = [root_location]
+locations_import.outer_traverse_db(root_location, root_location.id)
+locations.extend(locations_import.locations)
+location_counts = locations_import.location_counts
     
 print(len(assets)) # 5770...but only 5767 assets will be give locations?  TODO: query db once imported to see which ones are missing location counts
 
