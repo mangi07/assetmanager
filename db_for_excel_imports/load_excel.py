@@ -1,5 +1,5 @@
 # ###################################################################
-# File: import.py
+# File: load_excel.py
 # Created: 4/29/2019
 #
 # Description: python classes here correspond to schema in import.sql
@@ -180,6 +180,8 @@ invoices = {}
 asset_invoices = []
 root_location = models.Location()
 root_location.description = "Earth"
+root_location.id = 1
+root_location.parent = None
 
 FAR_REGEX = re.compile("[0-9]{5}:([0-9]{1,}|na)")
 import ast
@@ -269,22 +271,21 @@ for index, row in df2.iterrows():
 
 
 df3 = get_df('input/new_cleaning_locations.xlsx', 'new_cleaning')
+id = 2
 for index, row in df3.iterrows():
     # ###############################
     # Locations
     # TODO: print out that module's location_counts
     locs_str = row['db_location']
     asset = assets[row['Item Number']]
-    root_location = locations_import.parse_locations(asset, locs_str, root_location)
-root_location.id = 1
+    root_location, id = locations_import.parse_locations(asset, locs_str, root_location, id)
+#root_location.id = 1
 locations = [root_location]
-locations_import.outer_traverse_db(root_location, root_location.id)
 locations.extend(locations_import.locations)
-location_counts = locations_import.location_counts
-    
-print(len(assets)) # 5770...but only 5767 assets will be give locations?  TODO: query db once imported to see which ones are missing location counts
 
-# TODO: import into sqlite db via pandas dataframe
+for loc in locations:
+    assert(isinstance(loc.id, int))
+location_counts = locations_import.location_counts
 
 
 # ##################################################################################################
@@ -321,24 +322,4 @@ print(len(assets)) # 5770...but only 5767 assets will be give locations?  TODO: 
 #    if loc_count.asset.bulk_count is not None:
 #        print("\n#################################")
 #        print(str(loc_count))
-"""
-manufacturers = {key:models.Manufacturer(key) for key in list(df.loc[:,"Manufacturer"])}
-suppliers = {key:models.Supplier(key) for key in list(df.loc[:,"Supplier"])}
-categories = {key:models.Category(key) for key in list(df.loc[:,"Type"])}
-categories.update({key:models.Category(key) for key in list(df.loc[:,"Specific Type"])})
-departments = {key:models.Department(key) for key in list(df.loc[:,"Department"])}
-requisitions = {key:models.Requisition(key) for key in list(df.loc[:,"REQUISITION"])}
-receiving = {key:models.Receiving(key) for key in list(df.loc[:,"RECEIVING"])}
 
-assets = {}
-todo_account # any items linked to this account may need to be added to FAR
-todo_far # any items lnkted to this far may need to be added to FAR
-fars = {"TODO":todo_far} # key is acct:pdf (format: ######:#[#[#]]) # TODO
-accounts = {"TODO":todo_account} # TODO
-asset_fars = [] # TODO
-pictures = {}
-asset_pics = []
-invoices = {}
-asset_invoices = []
-root_location
-"""

@@ -36,6 +36,12 @@ select asset.asset_id, asset.description, cat1.name as cat1, cat2.name as cat2 f
   left join category cat1 on asset.category_1 = cat1.id
   left join category cat2 on asset.category_2 = cat2.id;
 
+-- select counts for a particular asset
+select asset.asset_id, asset.description, location_count.description, location_count.count from asset
+  inner join location_count on asset.id = location_count.asset
+  inner join location on location_count.location = location.id
+where asset.asset_id = 'folding-chairs-mity-lite-swiftset';
+
 -- -----------------------
 -- reset tables --
 -- -----------------------

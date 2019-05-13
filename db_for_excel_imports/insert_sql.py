@@ -1,8 +1,14 @@
+# ###################################################################
+# File: insert_sql.py
+# Created: 4/29/2019
+#
+# Description: main entry point and runner for the other scripts in this folder
+# ###################################################################
+
 import load_excel as imports
 import locations_import
 import models
 import sqlite3
-import sys # for sys.exit()
 
 
 
@@ -134,25 +140,24 @@ insert_items("far", imports.fars.values(), models.Far, cursor)
 insert_items("picture", imports.pictures.values(), models.Picture, cursor)
 
 
-print(len(imports.locations)) # debug
-print(len(imports.location_counts)) # debug
+for loc in imports.locations:
+    assert(loc.id is not None)
 insert_items("location", imports.locations, models.Location, cursor)
 for loc_count in imports.location_counts:
-    print("asset: " + loc_count.asset.asset_id) # debug
     loc_count.asset = loc_count.asset.id
-    loc_count.location = loc_count.location.id
+    loc_count.location = loc_count.location.id # why are we getting integrity violation here on last asset's location count ??
+    assert(loc_count.location is not None)
+
+
+for loc_count in imports.location_counts:
+    print("\nlocation count:")
+    print("asset: " + str(loc_count.asset)) # debug
+    print("location: " + str(loc_count.location)) # debug
+    print("count: " + str(loc_count.count))
+
+
 insert_items("location_count", imports.location_counts, models.LocationCount, cursor)
 
-
-"""
-for lc in location_counts:
-    lc.asset = lc.asset.id
-    print(lc.asset)
-    lc.location = lc.location.id    # TODO: bug: sometimes lc.location.id is None
-    assert(isinstance(lc.asset, int))
-    assert(isinstance(lc.location, int))
-insert_items("location_count", location_counts, models.LocationCount, cursor)
-"""
 
 conn.close()
 

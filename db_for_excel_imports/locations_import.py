@@ -45,26 +45,31 @@ def add_loc_count(asset, loc, count):
 
 
 # add child to curr_loc
-def add_buffer(asset, buff, curr_loc):
+def add_buffer(asset, buff, curr_loc, id, should_add_count):
     buff_str = ''.join(buff).strip()
     buff_str, count = get_count(buff_str)
     if buff_str not in curr_loc.children:
         # add buffer as new location
         loc = models.Location()
         loc.description = buff_str
-        loc.parent = curr_loc
+        loc.parent = curr_loc # or should curr_loc.id be assigned here? - but causes problems assigning in ']' of parse_locations
+        loc.id = id
+        id = id + 1
         curr_loc.children[buff_str] = loc
-        #locations.append(loc)
+        locations.append(loc)
     else:
         # find buff_str location in parent
         loc = curr_loc.children[buff_str]
     # add loc to location_counts
-    add_loc_count(asset, loc, count)
+    assert(isinstance(loc.id, int))
+    if should_add_count:
+        add_loc_count(asset, loc, count)
+    return id, loc
 
 
 # work in counts
 # work in asset-to-location-count associations
-def parse_locations(asset, locs_str, root_loc):
+def parse_locations(asset, locs_str, root_loc, id):
     curr_loc = root_loc
     buff = []
     temp_loc = root_loc # location just before entering a set of brackets
@@ -75,12 +80,13 @@ def parse_locations(asset, locs_str, root_loc):
         if c=='[':
             temp_loc = curr_loc
         elif c==']' and len(buff) > 0 and not ''.join(buff).isspace():
-            add_buffer(asset, buff, curr_loc)
+            id, loc = add_buffer(asset, buff, curr_loc, id, True)
             # clear buffer and traverse back up to make parent the current location
             buff.clear()
             curr_loc = temp_loc.parent
+            assert(isinstance(curr_loc, int) is not True)
         elif c==',' and len(buff) > 0 and not ''.join(buff).isspace():
-            add_buffer(asset, buff, curr_loc)
+            id, loc = add_buffer(asset, buff, curr_loc, id, True)
             buff.clear()
             if traversing_down:
                 curr_loc = temp_loc
@@ -90,16 +96,7 @@ def parse_locations(asset, locs_str, root_loc):
             if not traversing_down:
                 temp_loc = curr_loc
             traversing_down = True
-            buff_str = ''.join(buff).strip()
-            loc = None
-            if buff_str not in curr_loc.children:
-                loc = models.Location()
-                loc.description = buff_str
-                loc.parent = curr_loc
-                curr_loc.children[buff_str] = loc
-            else:
-                loc = curr_loc.children[buff_str]
-            #add_buffer(asset, buff, loc)
+            id, loc = add_buffer(asset, buff, curr_loc, id, False)
             curr_loc = loc
             buff.clear()
         elif c=='>':
@@ -111,9 +108,10 @@ def parse_locations(asset, locs_str, root_loc):
     
     # take care of anything left in the buffer outside the for loop by adding it to its parent
     if len(buff) > 0 and not ''.join(buff).strip().isspace():
-        add_buffer(asset, buff, curr_loc)
+        add_buffer(asset, buff, curr_loc, id, True)
+        id = id + 1
     
-    return root_loc
+    return root_loc, id
 
 
 # walk tree to print it out
@@ -136,16 +134,17 @@ class Count:
     def __init__(self, number):
         self.number = number + 1
 
-def traverse_locations_for_db(parent, count):
-    children = copy.deepcopy([v for (k,v) in parent.children.items()]) # put children on stack
-    while len(children) > 0:
-        child = children.pop()
-        child.id = count.number
-        child.parent = parent.id
-        locations.append(child)
-        
-        count.number = count.number + 1
-        traverse_locations_for_db(child, count)
 
-def outer_traverse_db(root, root_id):
-    traverse_locations_for_db(root, Count(root_id))
+# def traverse_locations_for_db(parent, count):
+#     children = copy.deepcopy([v for (k,v) in parent.children.items()]) # put children on stack
+#     while len(children) > 0:
+#         child = children.pop()
+#         assert(child.id is not None)
+#         child.parent = parent.id
+#         locations.append(child)
+            
+#         #count.number = count.number + 1
+#         traverse_locations_for_db(child, count)
+
+# def outer_traverse_db(root, root_id):
+#     traverse_locations_for_db(root, Count(root_id))

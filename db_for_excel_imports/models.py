@@ -250,7 +250,7 @@ class Location:
         return str(self.parent) + " >> " + str(self.description) # recursion expands this string
 
     def list_vals(self):
-        return [self.id, self.description, self.parent]
+        return [self.id, self.description, self.parent.id if self.parent is not None else None]
     def list_column_names():
         return ["id", "description", "parent"]
 
