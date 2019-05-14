@@ -256,18 +256,28 @@ for index, row in df2.iterrows():
         asset_pics.append(ap)
     
     # ###############################
-    # Invoices
+    # Invoices TODO: combine columns for invoice # and invoice pic in same db table
     invoice_paths = row['Invoice pics']
-    invoice_list = ast.literal_eval(invoice_paths)
-    for invoice in invoice_list:
-        if invoice not in invoices:
-            i = models.Invoice()
-            i.filepath = invoice
-            invoices[invoice] = i
-        ai = models.AssetInvoice()
-        ai.asset = asset
-        ai.invoice = i
-        asset_invoices.append(ai)
+    invoice_numbers = row['INVOICE/ORDER/RECEIPT #']
+    if invoice_numbers != "nan":
+        invoice_paths_list = ast.literal_eval(invoice_paths)
+        invoice_numbers_list = ast.literal_eval(invoice_numbers)
+        print(row['Item Number'])
+        print(invoice_numbers_list)
+        print(invoice_paths_list)
+        print("#########")
+        for index, invoice_number in enumerate(invoice_numbers_list):
+            if (invoice_number,invoice_paths_list[index]) not in invoices:
+                i = models.Invoice()
+                i.filepath = invoice_paths_list[index]
+                i.number = invoice_number
+                invoices[(invoice_number,invoice_paths_list[index])] = i
+            else:
+                i = invoices[(invoice_number,invoice_paths_list[index])]
+            ai = models.AssetInvoice()
+            ai.asset = asset
+            ai.invoice = i
+            asset_invoices.append(ai)
 
 
 df3 = get_df('input/new_cleaning_locations.xlsx', 'new_cleaning')

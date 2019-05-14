@@ -31,16 +31,36 @@ insert into category (name) values ('category2');
 -- update asset1 to include category2
 update asset set category_2=1 where id=1;
 
--- select asset and include multiple related fields
+-- select asset and associated category names
 select asset.asset_id, asset.description, cat1.name as cat1, cat2.name as cat2 from asset
   left join category cat1 on asset.category_1 = cat1.id
   left join category cat2 on asset.category_2 = cat2.id;
 
--- select counts for a particular asset
+-- select location counts for a particular asset
 select asset.asset_id, asset.description, location.description, location_count.count from asset
   inner join location_count on asset.id = location_count.asset
   inner join location on location_count.location = location.id
 where asset.asset_id = 'folding-chairs-mity-lite-swiftset';
+
+-- select invoice file paths associated with asset ids
+select asset.asset_id, invoice.file_path from asset
+inner join asset_invoice on asset_invoice.asset = asset.id
+inner join invoice on asset_invoice.invoice = invoice.id;
+
+-- select list of asset-far associations
+select asset.asset_id, far.description, account.number, far.pdf from asset
+inner join asset_far on asset.id = asset_far.asset
+inner join far on asset_far.far = far.id
+inner join account on far.account = account.id;
+
+-- select list of asset-invoice associations
+select asset.asset_id, asset.description, invoice.number, invoice.file_path from asset
+inner join asset_invoice on asset_invoice.asset = asset.id
+inner join invoice on asset_invoice.invoice = invoice.id;
+
+-- select number of assets that have invoice associations
+select count(distinct asset.asset_id) from asset
+inner join asset_invoice on asset_invoice.asset = asset.id;
 
 -- -----------------------
 -- reset tables --

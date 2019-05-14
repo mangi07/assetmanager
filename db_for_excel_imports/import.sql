@@ -186,8 +186,9 @@ CREATE TABLE IF NOT EXISTS "location_count"
 CREATE TABLE IF NOT EXISTS "invoice"
 (
     [id] INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-    [number] TEXT NOT NULL,
-    [file_path] TEXT NOT NULL
+    [number] TEXT,
+    [file_path] TEXT,
+    CHECK (number IS NOT NULL OR file_path IS NOT NULL)
 );
 
 CREATE TABLE IF NOT EXISTS "asset_invoice"

@@ -231,9 +231,9 @@ class AssetFar: # m2m
         return s
     
     def list_vals(self):
-        return [self.id, self.account, self.description, self.pdf, self.life, self.start_date]
+        return [self.asset, self.far]
     def list_column_names():
-        return ["id", "account", "description", "pdf", "life", "start_date"]
+        return ["asset", "far"]
 
 
 # schema done
@@ -282,6 +282,11 @@ class Invoice:
     
     def __str__(self):
         return "\nInvoice path: " + self.filepath
+        
+    def list_vals(self):
+        return [self.id, self.number, self.filepath]
+    def list_column_names():
+        return ["id", "number", "file_path"]
     
 # schema done
 class AssetInvoice: # m2m assets-invoices
@@ -292,6 +297,11 @@ class AssetInvoice: # m2m assets-invoices
     
     def __str__(self):
         return "\n~~~AssetInvoice: " + str(self.asset) + str(self.invoice)
+    
+    def list_vals(self):
+        return [self.asset, self.invoice]
+    def list_column_names():
+        return ["asset", "invoice"]
 
 # schema done
 class Picture:
@@ -317,4 +327,9 @@ class AssetPicture:
     
     def __str__(self):
         return "\n~~~AssetPicture: " + str(self.asset) + str(self.filepath)
+    
+    def list_vals(self):
+        return [self.asset, self.filepath]
+    def list_column_names():
+        return ["asset", "picture"]
 

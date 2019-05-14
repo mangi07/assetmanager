@@ -132,47 +132,47 @@ insert_items("asset", imports.assets.values(), models.Asset, cursor)
 # location_count
 
 
+# FAR
 insert_items("account", imports.accounts.values(), models.Account, cursor)
 for far in imports.fars.values():
     far.account = far.account.id
     assert(isinstance(far.account, int))
 insert_items("far", imports.fars.values(), models.Far, cursor)
-insert_items("picture", imports.pictures.values(), models.Picture, cursor)
+# asset_fars # TODO
+for af in imports.asset_fars:
+    af.asset = af.asset.id
+    af.far = af.far.id
+insert_items("asset_far", imports.asset_fars, models.AssetFar, cursor)
 
-
+# location counts
 for loc in imports.locations:
     assert(loc.id is not None)
 insert_items("location", imports.locations, models.Location, cursor)
 for loc_count in imports.location_counts:
     loc_count.asset = loc_count.asset.id
-    loc_count.location = loc_count.location.id # why are we getting integrity violation here on last asset's location count ??
+    loc_count.location = loc_count.location.id
     assert(loc_count.location is not None)
-
-
-for loc_count in imports.location_counts:
-    print("\nlocation count:")
-    print("asset: " + str(loc_count.asset)) # debug
-    print("location: " + str(loc_count.location)) # debug
-    print("count: " + str(loc_count.count))
-
-
 insert_items("location_count", imports.location_counts, models.LocationCount, cursor)
+
+# TEST #########################################################
+# invoices
+insert_items("invoice", imports.invoices.values(), models.Invoice, cursor)
+for ai in imports.asset_invoices:
+    ai.asset = ai.asset.id
+    ai.invoice = ai.invoice.id
+insert_items("asset_invoice", imports.asset_invoices, models.AssetInvoice, cursor)
+
+# TEST #########################################################
+# asset pictures
+insert_items("picture", imports.pictures.values(), models.Picture, cursor)
+for ap in imports.asset_pics:
+    ap.asset = ap.asset.id
+    ap.filepath = ap.filepath.id
+insert_items("asset_picture", imports.asset_pics, models.AssetPicture, cursor)
 
 
 conn.close()
 
-
-
-
-# TEST account results
-#for k,v in accounts.items():
-#    print(v)
-
-# TEST far results
-#for k,v in fars.items():
-#    print(v)
-    
-#print("Number of far entries: " + str(len(fars))) # expected: 76 unique entries
 
 # TEST asset-far associations
 #for af in asset_fars:
@@ -188,13 +188,7 @@ conn.close()
 
 
 """
-todo_account # any items linked to this account may need to be added to FAR
-todo_far # any items lnkted to this far may need to be added to FAR
-fars = {"TODO":todo_far} # key is acct:pdf (format: ######:#[#[#]]) # TODO
-accounts = {"TODO":todo_account} # TODO
 asset_fars = [] # TODO
-pictures = {}
-asset_pics = []
 invoices = {}
 asset_invoices = []
 root_location

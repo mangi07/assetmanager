@@ -134,17 +134,3 @@ class Count:
     def __init__(self, number):
         self.number = number + 1
 
-
-# def traverse_locations_for_db(parent, count):
-#     children = copy.deepcopy([v for (k,v) in parent.children.items()]) # put children on stack
-#     while len(children) > 0:
-#         child = children.pop()
-#         assert(child.id is not None)
-#         child.parent = parent.id
-#         locations.append(child)
-            
-#         #count.number = count.number + 1
-#         traverse_locations_for_db(child, count)
-
-# def outer_traverse_db(root, root_id):
-#     traverse_locations_for_db(root, Count(root_id))
