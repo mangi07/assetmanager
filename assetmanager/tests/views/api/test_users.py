@@ -263,7 +263,8 @@ class LoginUserTest(TestCase):
         # test out with real dev server outside this testing framework
         # ...or switch to basic token authentication provided by django (reduce dependency)
         
-        # log user in
+        # ###################################################################################
+        # use logged in during setUp, so test user credentials here
         self.assertEqual(self.response.status_code, status.HTTP_200_OK)
         token_dict = json.loads(self.response.content)
         self.assertTrue('access' in token_dict)
@@ -275,6 +276,8 @@ class LoginUserTest(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
+        
+        # ###################################################################################
         # log user out
         from rest_framework_simplejwt.tokens import RefreshToken
         from rest_framework_simplejwt.tokens import AccessToken
@@ -282,9 +285,11 @@ class LoginUserTest(TestCase):
         
         # base64 encoded token string
         token = RefreshToken(token_dict['refresh'])
+        print()
         print(token)
         print()
         token.blacklist()
+        #token.check_blacklist() # should raise error TokenError("Token is blacklisted")
         
         class Black(BlacklistMixin, AccessToken):
             pass
@@ -292,10 +297,11 @@ class LoginUserTest(TestCase):
         token = Black(token_dict['access'])
         print(token)
         token.blacklist()
-        token.check_blacklist()
+        #token.check_blacklist()  # should raise error TokenError("Token is blacklisted")
         
         # attempt to log in again should fail
         response = self.client.get(
             reverse('location-list')
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        

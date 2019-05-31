@@ -6,6 +6,10 @@
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}Login{% endblock %}</title>
+  <!--<script src="{% static 'js/login.js' %}" type="module"></script>-->
+  {% block child_script %}
+    "{% static 'js/login.js' %}"
+  {% endblock %}
 </head>
 
 <body>
@@ -15,7 +19,7 @@
     <form>
       <div class="form-group">
         <label for="user">Username:</label>
-        <input type="email" class="form-control" id="user">
+        <input type="text" class="form-control" id="user">
       </div>
       
       <div class="form-group">
@@ -23,7 +27,7 @@
         <input type="password" class="form-control" id="pwd">
       </div>
       
-      <button type="submit" class="btn btn-primary">Login</button>
+      <button id="login" type="submit" class="btn btn-primary">Login</button>
       <a href="#">Forgot Username?</a>
     </form>
   </div>
