@@ -289,7 +289,8 @@ class LoginUserTest(TestCase):
         print(token)
         print()
         token.blacklist()
-        #token.check_blacklist() # should raise error TokenError("Token is blacklisted")
+        with self.assertRaises(TokenError):
+            token.check_blacklist() # should raise error TokenError("Token is blacklisted")
         
         class Black(BlacklistMixin, AccessToken):
             pass
@@ -297,7 +298,8 @@ class LoginUserTest(TestCase):
         token = Black(token_dict['access'])
         print(token)
         token.blacklist()
-        #token.check_blacklist()  # should raise error TokenError("Token is blacklisted")
+        with self.assertRaises(TokenError):
+            token.check_blacklist()  # should raise error TokenError("Token is blacklisted")
         
         # attempt to log in again should fail
         response = self.client.get(
@@ -305,3 +307,4 @@ class LoginUserTest(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         
+    # TODO: test superadmin can delete user from web admin after that user's token(s) expire
