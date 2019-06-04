@@ -20,7 +20,6 @@ result = requests.post(base_url + 'api/v1/user/create/',
 		"department": "DEFAULT", "user_type": "manager"}
 )
 result = requests.post(base_url + 'api/v1/token/', data={"username":"manager", "password": "password"})
-print(result)
 manager_token = result.json()['access']
 # ###################################################################################################
 # create regular user and get regular user token
@@ -30,7 +29,6 @@ result = requests.post(base_url + 'api/v1/user/create/',
 		"department": "DEFAULT", "user_type": "regular"}
 )
 result = requests.post(base_url + 'api/v1/token/', data={"username":"regular", "password": "password"})
-print(result)
 user_token = result.json()['access']
 # TODO: create and test manager and regular user
 
@@ -70,21 +68,43 @@ api_version = 'api/v1/'
 UserTest = namedtuple('UserTest', ['url', 'method', 'token', 'expected_status', 'redirect'])
 tests = [
 	UserTest(api_version, Method.GET, superuser_token, 200, False), 
+	UserTest(api_version, Method.GET, manager_token, 200, False), 
+	UserTest(api_version, Method.GET, user_token, 200, False), 
+	UserTest(api_version, Method.GET, None, 403, False), 
+
+	UserTest(api_version + 'assets/', Method.GET, superuser_token, 200, False), 
+	UserTest(api_version + 'assets/', Method.GET, manager_token, 200, False), 
+	UserTest(api_version + 'assets/', Method.GET, user_token, 200, False), 
+	UserTest(api_version + 'assets/', Method.GET, None, 403, False), 
+
+	UserTest(api_version + 'assets/bulkDelete/', Method.POST, superuser_token, 400, False), 
+	UserTest(api_version + 'assets/bulkDelete/', Method.POST, manager_token, 400, False), 
+	UserTest(api_version + 'assets/bulkDelete/', Method.POST, user_token, 400, False), 
+	UserTest(api_version + 'assets/bulkDelete/', Method.POST, None, 403, False),
+
+	UserTest(api_version + 'assets/9999/', Method.GET, superuser_token, 404, False), # assuming db has no asset with asset_id 9999
+	UserTest(api_version + 'assets/9999/', Method.GET, manager_token, 404, False), 
+	UserTest(api_version + 'assets/9999/', Method.GET, user_token, 404, False), 
+	UserTest(api_version + 'assets/9999/', Method.GET, None, 403, False),
+
+	UserTest(api_version + 'locations/', Method.GET, superuser_token, 200, False), 
+	UserTest(api_version + 'locations/', Method.GET, manager_token, 200, False), 
+	UserTest(api_version + 'locations/', Method.GET, user_token, 200, False), 
+	UserTest(api_version + 'locations/', Method.GET, None, 403, False), 
+
+	UserTest(api_version + 'locations/bulkDelete/', Method.POST, superuser_token, 400, False), 
+	UserTest(api_version + 'locations/bulkDelete/', Method.POST, manager_token, 400, False), 
+	UserTest(api_version + 'locations/bulkDelete/', Method.POST, user_token, 400, False), 
+	UserTest(api_version + 'locations/bulkDelete/', Method.POST, None, 403, False), 
 	
-	UserTest(api_version + 'assets/', Method.GET, 200, False), 
-	
-	UserTest(api_version + 'bulkDelete/', Method.POST, 200, False), 
-	
-	UserTest(api_version + 'assets/1/', Method.GET, 200, False), 
-	
-	UserTest(api_version + 'locations/', Method.GET, 200, False), 
-	
-	UserTest(api_version + 'locations/bulkDelete', Method.POST, 200, True), 
-	
-	UserTest(api_version + 'user/create/', Method.POST, superuser_token, 400, False),
+	UserTest(api_version + 'user/create/', Method.POST, superuser_token, 400, False), 
+	UserTest(api_version + 'user/create/', Method.POST, manager_token, 400, False), 
+	UserTest(api_version + 'user/create/', Method.POST, user_token, 400, False), 
 	UserTest(api_version + 'user/create/', Method.POST, None, 403, False),
 	
-	UserTest('home/', Method.GET, superuser_token, 200, False),
+	UserTest('home/', Method.GET, superuser_token, 200, False), 
+	UserTest('home/', Method.GET, manager_token, 200, False), 
+	UserTest('home/', Method.GET, user_token, 200, False), 
 	UserTest('home/', Method.GET, None, 302, True),
 	
 	# TODO: login/

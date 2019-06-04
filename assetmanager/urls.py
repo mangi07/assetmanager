@@ -24,7 +24,7 @@ urlpatterns = [
     
     path(api_root_path + 'user/create/', user_views.UserCreate.as_view(), name='create-user'),
     
-    # todo - protect this page !!
+    
     path('home/', login_required(views.HomePageView.as_view()), name='home'),
     
     # ##########################################################

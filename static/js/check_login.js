@@ -12,21 +12,9 @@ const requester = axios.create({
 });
 
 
-function login(username, password){
-  var data = {"username": username, "password": password};
+function check_login(username, password){
   requester.post('/token/', data)
     .then(function (response) {
-      // TODO: handle any users currently logged in on this machine 
-      //   by logging out current user: delete tokens on machine (and optionally blacklist them immediately on server once blacklisting works)
-
-      // handle success
-      accessToken = response.data.access;
-      refreshToken = response.data.refresh;
-      tokenData = {'access': accessToken, 'refresh': refreshToken};
-
-      // TODO: save token on user's device
-      window.sessionStorage.setItem('assetmanagerUserToken', JSON.stringify(tokenData));
-      
       // TODO: once done testing, redirect to home page
       access = JSON.parse(window.sessionStorage.getItem('assetmanagerUserToken')).access;
       refresh = JSON.parse(window.sessionStorage.getItem('assetmanagerUserToken')).refresh;
