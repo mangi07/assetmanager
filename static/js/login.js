@@ -11,6 +11,17 @@ const requester = axios.create({
   //timeout: 1000,
 });
 
+function getHomeTemplate(access){
+  return requester.get('/template/home/',  {
+    headers: {'Authorization': `Bearer ${access}`}
+  })
+    .then(function (response) {
+      return response.data;
+    })
+    .catch(function (error) {
+      // TODO: do something here
+    });
+}
 
 function login(username, password){
   var data = {"username": username, "password": password};
@@ -24,13 +35,25 @@ function login(username, password){
       refreshToken = response.data.refresh;
       tokenData = {'access': accessToken, 'refresh': refreshToken};
 
-      // TODO: save token on user's device
+      // save token on user's device
       window.sessionStorage.setItem('assetmanagerUserToken', JSON.stringify(tokenData));
       
-      // TODO: once done testing, redirect to home page
-      access = JSON.parse(window.sessionStorage.getItem('assetmanagerUserToken')).access;
-      refresh = JSON.parse(window.sessionStorage.getItem('assetmanagerUserToken')).refresh;
-      window.location.href = '/home/';
+      // load home page content
+      access = JSON.parse(window.sessionStorage.getItem('assetmanagerUserToken')).access; // TODO: may be okay to delete this line
+      refresh = JSON.parse(window.sessionStorage.getItem('assetmanagerUserToken')).refresh;  // TODO: may be okay to delete this line
+      //window.location.href = '/home/';
+      var template = "<div>ERROR</div>";
+      getHomeTemplate(access).then(
+        function (result) {
+          template = result;
+          console.log(template);
+          $( ".container" ).html( template );
+        }
+      )
+        .catch(function (error) { 
+          template = "<div>ERROR</div>";
+          $( ".container" ).html( template );
+        });
 
     })
     .catch(function (error) {

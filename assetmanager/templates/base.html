@@ -13,7 +13,7 @@
       // borrowed from: https://varvy.com/pagespeed/defer-loading-javascript.html
       function downloadJSAtOnload() {
         var element = document.createElement("script");
-        element.src = {% block child_script %}{% endblock %};
+        element.src = "{% static 'js/check_login.js' %}";
         document.body.appendChild(element);
       }
 

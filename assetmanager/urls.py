@@ -23,12 +23,15 @@ urlpatterns = [
     path(api_root_path, views.api_root),
     
     path(api_root_path + 'user/create/', user_views.UserCreate.as_view(), name='create-user'),
+
+    path(api_root_path + 'template/index/', views.TemplateLoader.as_view(), name='template-loader'),    
     
     
-    path('home/', login_required(views.HomePageView.as_view()), name='home'),
+    
     
     # ##########################################################
     # public views - no authentication required
+    path('', views.HomePageView.as_view(), name='base'),
     path('login/', views.LoginView.as_view(), name='login'),
     path('about/', views.AboutPageView.as_view(), name='about'),
 

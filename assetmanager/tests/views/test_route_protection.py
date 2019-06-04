@@ -102,6 +102,7 @@ tests = [
 	UserTest(api_version + 'user/create/', Method.POST, user_token, 400, False), 
 	UserTest(api_version + 'user/create/', Method.POST, None, 403, False),
 	
+	# TODO: change this because home is now a template loaded by client - should now be a protected api resource called template
 	UserTest('home/', Method.GET, superuser_token, 200, False), 
 	UserTest('home/', Method.GET, manager_token, 200, False), 
 	UserTest('home/', Method.GET, user_token, 200, False), 

@@ -21,6 +21,7 @@ from .custom_paginator import CustomPaginator
 from ..tests.schemas.utils import load_json_schema
 from jsonschema import validate
 from jsonschema import ValidationError
+from rest_framework.renderers import TemplateHTMLRenderer
 
 from django.views.generic import TemplateView
 
@@ -32,14 +33,29 @@ from ..custom_api_exceptions import BadRequestException
 
 class LoginView(TemplateView):
     template_name = "login.html"
-
-
-class HomePageView(TemplateView):
-    template_name = "index.html"
-
-
 class AboutPageView(TemplateView):
     template_name = "about.html"
+
+class HomePageView(TemplateView):
+    template_name = "base.html"
+
+
+class TemplateLoader(APIView):
+    """
+    A view that returns a templated HTML to load in base.html.
+    """
+
+    #from django.template.loader import render_to_string
+    #rendered = render_to_string('my_template.html', {'foo': 'bar'})
+    renderer_classes = (TemplateHTMLRenderer,)
+
+    def post(self, request, *args, **kwargs):
+        # TODO: parse the url to decide which template to load (more templates to be added)
+        self.object = self.get_object()
+        #return Response({'user': self.object}, template_name='index.html')
+        return Response(template_name='index.html')
+
+
 
 
 @api_view(['GET'])
