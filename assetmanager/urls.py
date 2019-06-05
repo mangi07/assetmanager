@@ -24,7 +24,7 @@ urlpatterns = [
     
     path(api_root_path + 'user/create/', user_views.UserCreate.as_view(), name='create-user'),
 
-    path(api_root_path + 'template/index/', views.TemplateLoader.as_view(), name='template-loader'),    
+    path(api_root_path + 'template/<str:template_name>/', views.TemplateLoader.as_view(), name='template-loader'),    
     
     
     
@@ -32,7 +32,7 @@ urlpatterns = [
     # ##########################################################
     # public views - no authentication required
     path('', views.HomePageView.as_view(), name='base'),
-    path('login/', views.LoginView.as_view(), name='login'),
+    path(api_root_path + 'login/', views.LoginView.as_view(), name='login'),
     path('about/', views.AboutPageView.as_view(), name='about'),
 
     path(api_root_path + 'token/', TokenObtainPairView.as_view(), name='token-obtain-pair'),

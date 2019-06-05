@@ -10,12 +10,14 @@
     <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}" type="text/css" />
 
     <script type="text/javascript">
-      // borrowed from: https://varvy.com/pagespeed/defer-loading-javascript.html
+      // modified from: https://varvy.com/pagespeed/defer-loading-javascript.html
       function downloadJSAtOnload() {
         var element = document.createElement("script");
         element.src = "{% static 'js/check_login.js' %}";
+        element.type = "module";
         document.body.appendChild(element);
       }
+      var scriptBaseDir = "{% static 'js/' %}";
 
       if (window.addEventListener)
         window.addEventListener("load", downloadJSAtOnload, false);
@@ -45,5 +47,9 @@
 
     <script src="{% static 'js/axios.min.js' %}"></script>
     <!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
+
+    <!-- Probably not needed?  ES6 imports working without this, tested in Google Chrome version 74.0.3729.169 -->
+    <script nomodule src="https://unpkg.com/browser-es-module-loader/dist/babel-browser-build.js"></script>
+    <script nomodule src="https://unpkg.com/browser-es-module-loader"></script>
   </body>
 </html>

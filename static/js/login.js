@@ -6,13 +6,16 @@ TODO: test usage of flushexpiredtokens available through django's manage.py (see
 
 Change to use localStorage if users want to stay logged in after closing window.
 * **************************************************************/
+
+import tokenUtils from "./tokens.js"
+
 const requester = axios.create({
   baseURL: '/api/v1/',
   //timeout: 1000,
 });
 
 function getHomeTemplate(access){
-  return requester.get('/template/home/',  {
+  return requester.post('/template/index.html',  {
     headers: {'Authorization': `Bearer ${access}`}
   })
     .then(function (response) {
@@ -20,39 +23,44 @@ function getHomeTemplate(access){
     })
     .catch(function (error) {
       // TODO: do something here
+      console.log("error from getHomeTemplate: " + error)
     });
 }
 
+// TODO: refactor out the saving tokens part - similar code in check_login.js
 function login(username, password){
   var data = {"username": username, "password": password};
   requester.post('/token/', data)
     .then(function (response) {
-      // TODO: handle any users currently logged in on this machine 
-      //   by logging out current user: delete tokens on machine (and optionally blacklist them immediately on server once blacklisting works)
+      // Note: user may have old tokens saved in local storage or session storage.
 
       // handle success
-      accessToken = response.data.access;
-      refreshToken = response.data.refresh;
-      tokenData = {'access': accessToken, 'refresh': refreshToken};
+      var accessToken = response.data.access;
+      var refreshToken = response.data.refresh;
+      //var tokenData = {'access': accessToken, 'refresh': refreshToken};
 
       // save token on user's device
-      window.sessionStorage.setItem('assetmanagerUserToken', JSON.stringify(tokenData));
-      
+      //window.sessionStorage.setItem('assetmanagerUserToken', JSON.stringify(tokenData));
+      tokenUtils.setTokens(accessToken, refreshToken);
+
+      var tokens = tokenUtils.getTokens();
+
       // load home page content
-      access = JSON.parse(window.sessionStorage.getItem('assetmanagerUserToken')).access; // TODO: may be okay to delete this line
-      refresh = JSON.parse(window.sessionStorage.getItem('assetmanagerUserToken')).refresh;  // TODO: may be okay to delete this line
-      //window.location.href = '/home/';
       var template = "<div>ERROR</div>";
-      getHomeTemplate(access).then(
+      getHomeTemplate(tokens.access).then(
         function (result) {
-          template = result;
+          if (result === null || result === undefined){
+            throw "New tokens obtained but cannot access home.";
+          }
+          var template = result;
           console.log(template);
-          $( ".container" ).html( template );
+          $( ".errors" ).html( template );
         }
       )
         .catch(function (error) { 
-          template = "<div>ERROR</div>";
-          $( ".container" ).html( template );
+          console.log(error);
+          var template = `<div>ERROR: ${error}</div>`;
+          $( ".errors" ).html( template );
         });
 
     })

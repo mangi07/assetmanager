@@ -33,6 +33,7 @@ from ..custom_api_exceptions import BadRequestException
 
 class LoginView(TemplateView):
     template_name = "login.html"
+
 class AboutPageView(TemplateView):
     template_name = "about.html"
 
@@ -48,12 +49,13 @@ class TemplateLoader(APIView):
     #from django.template.loader import render_to_string
     #rendered = render_to_string('my_template.html', {'foo': 'bar'})
     renderer_classes = (TemplateHTMLRenderer,)
+    permission_classes = []
 
     def post(self, request, *args, **kwargs):
         # TODO: parse the url to decide which template to load (more templates to be added)
-        self.object = self.get_object()
+        template = kwargs.get('template_name')
         #return Response({'user': self.object}, template_name='index.html')
-        return Response(template_name='index.html')
+        return Response(template_name=template)
 
 
 
