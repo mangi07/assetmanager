@@ -49,11 +49,12 @@ class TemplateLoader(APIView):
     #from django.template.loader import render_to_string
     #rendered = render_to_string('my_template.html', {'foo': 'bar'})
     renderer_classes = (TemplateHTMLRenderer,)
-    permission_classes = []
+    #permission_classes = []
 
     def post(self, request, *args, **kwargs):
         # TODO: parse the url to decide which template to load (more templates to be added)
         template = kwargs.get('template_name')
+        template = 'index.html'
         #return Response({'user': self.object}, template_name='index.html')
         return Response(template_name=template)
 

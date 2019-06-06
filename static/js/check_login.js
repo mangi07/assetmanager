@@ -8,6 +8,7 @@ Change to use localStorage if users want to stay logged in after closing window.
 * **************************************************************/
 
 import tokenUtils from "./tokens.js"
+import templateUtils from "./templates.js"
 
 const requester = axios.create({
   baseURL: '/api/v1/',
@@ -22,37 +23,20 @@ function loadLogin(){
       $( ".container" ).html( template );
     })
     .catch(function (error) {
-      console.log(error);
-      var html = "<div>ERROR</div>";
+      var html = "<div>ERROR attempting to load login form.</div>";
       $( ".container" ).html( html );
     });
 }
 
-function loadTemplate(access, refresh, template, retries){
-  requester.post(template, {
-    headers: {'Authorization': `Bearer ${access}`},
-  })
-    .then(function (response) {
-      var template = response.data;
-      $( ".container" ).html( template );
-    })
-    .catch(function (error) {
-      console.log(error);
-      // TODO: try to get new access and refresh based on the now assumed-to-be-expired access token
-      if (retries <= 0) {
-        loadLogin();
-        return;
-      } else {
-        retries--;
-      }
-      try {
-        tokenUtils.renewTokens(refresh);
-        var tokens = tokenUtils.getTokens();
-        loadTemplate(tokens.access, tokens.refresh, template, retries);
-      } catch {
-        loadLogin();
-      }
-    });
+async function loadTemplate(access, refresh, template, retries){
+  try {
+    var content = await templateUtils.getTemplate(access, refresh, template, retries);
+    var template = response.data;
+    $( ".container" ).html( content );
+  } catch (error) {
+    loadLogin();
+    $( ".errors" ).html( error );
+  }
 }
 
 /*
@@ -61,14 +45,14 @@ if so, load the home template
 if not, load the login template
 */
 function check_login(){
-  var tokens = tokenUtils.getTokens();
-  if (tokens === null) {
+  try {
+    var tokens = tokenUtils.getTokens();
+  } catch (error) {
+    console.log(error);
     loadLogin();
-  } else {
-    console.log(tokens);
-    loadTemplate(tokens.access, tokens.refresh, 'template/index.html', 1);
+    return;
   }
-
+  loadTemplate(tokens.access, tokens.refresh, 'template/index.html', 1);
 }
 
 check_login();

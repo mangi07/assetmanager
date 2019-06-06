@@ -17,13 +17,26 @@ import requests
 #print(q.text)
 
 
-result = requests.post('http://localhost:8000/api/v1/token/', data={"username":"regular", "password": "Kanimpabro13."})
-token = result.json()['access']
-result = requests.post('http://localhost:8000/api/v1/user/create/',
-    headers={'Authorization': 'Bearer {}'.format(token)},
-    data={"username": "manager user 2", "password": "123", "confirmPassword": "password",
-        "department": "AV", "user_type": "manager"}
-)
+#result = requests.post('http://localhost:8000/api/v1/token/', data={"username":"admin", "password": "password"})
+#token = result.json()['access']
+#result = requests.post('http://localhost:8000/api/v1/user/create/',
+#    headers={'Authorization': 'Bearer {}'.format(token)},
+#    data={"username": "manager user 2", "password": "123", "confirmPassword": "password",
+#        "department": "AV", "user_type": "manager"}
+#)
+#
+#print(result)
+#print(result.text)
 
+result = requests.post('http://localhost:8000/api/v1/token/', data={"username":"admin", "password": "password"})
+token = result.json()['access']
+print(token)
+#token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTU5Nzc2NjA3LCJqdGkiOiIwZWIzMzFmMTdjOWU0OTQ5YjhhZmI2MGZiMTY1MTEzZSIsInVzZXJfaWQiOjEyfQ.oPs00QYBRR7OcLZjytdZlzuIkAH7zse4AdxkT7uouZE"
+#token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTU5Nzg0OTEwLCJqdGkiOiI0MzdkOTIxMzVjMDQ0NzY5OWM5Mjc3MTlkMTBlZmI1OSIsInVzZXJfaWQiOjEyfQ.5MNplhpobwP8kZHjitUzcF_0ak_zxns0YmGs7qE_8c0"
+token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTU5Nzg0OTk5LCJqdGkiOiJjYzQ3MGJlYzE3Njk0OWYyODBjYzYxY2ExZDMxZDA3NiIsInVzZXJfaWQiOjEyfQ.xTRhti1GCUz1Bun74ecAa56EjFlnOioPDiYso0cc0DQ"
+result = requests.post('http://localhost:8000/api/v1/template/index.html/',
+    headers={'Authorization': 'Bearer {}'.format(token)},
+)
+#result = requests.post('http://localhost:8000/api/v1/template/index.html/')
 print(result)
 print(result.text)
