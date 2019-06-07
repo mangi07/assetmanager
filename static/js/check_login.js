@@ -1,11 +1,9 @@
 /* ************************************************************** 
-JWT TOKEN AUTHENTICATION USAGE
-https://github.com/davesque/django-rest-framework-simplejwt#usage
-TODO: test usage of flushexpiredtokens available through django's manage.py (see: 
-  https://github.com/davesque/django-rest-framework-simplejwt#blacklist-app)
+File: check_login.js
 
 Change to use localStorage if users want to stay logged in after closing window.
 * **************************************************************/
+'use strict';
 
 import tokenUtils from "./tokens.js"
 import templateUtils from "./templates.js"
@@ -31,9 +29,11 @@ function loadLogin(){
 async function loadTemplate(access, refresh, template, retries){
   try {
     var content = await templateUtils.getTemplate(access, refresh, template, retries);
-    var template = response.data;
+    console.log("content to be loaded into container:");
+    console.log(content);
     $( ".container" ).html( content );
   } catch (error) {
+    console.log(error);
     loadLogin();
     $( ".errors" ).html( error );
   }

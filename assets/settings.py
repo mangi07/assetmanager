@@ -33,7 +33,7 @@ ALLOWED_HOSTS = ['mangi07.pythonanywhere.com', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
-    'rest_framework_simplejwt.token_blacklist',
+    #'rest_framework_simplejwt.token_blacklist',
     'assetmanager.apps.AssetmanagerConfig',
     'rest_framework',
     'django.contrib.admin',
@@ -153,9 +153,9 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=15),
-#    'ROTATE_REFRESH_TOKENS': True,
+    'ACCESS_TOKEN_LIFETIME': timedelta(seconds=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=30),
+    'ROTATE_REFRESH_TOKENS': True,
 #    'BLACKLIST_AFTER_ROTATION': True,
 }
 
