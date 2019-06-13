@@ -22,16 +22,27 @@ class TestResult {
 
 class TestRunner {
 
-	constructor (tests) {
-		this.tests = [].concat(tests);
+	constructor (testCases) {
+		this.testCases = [].concat(testCases);
 		this.results = [];
-		this.total = tests.length;
+		this.total = testCases.length;
 		this.failed = this.total;
 	}
 
-	runTests () {
-		for (var x = 0; x < this.tests.length; x++) {
-			this.results.push(this.tests[x]());
+	runTests (testCase) {
+		Object.values(testCase).map(test => {
+			if (typeof test === 'function') {
+				var result = test.call();
+				this.results.push(result);
+			}
+		})
+	}
+
+	runTestCases () {
+		for (var x = 0; x < this.testCases.length; x++) {
+			var testCase = new this.testCases[x];
+			var result = this.runTests(testCase);
+			this.results.push(result);
 		}
 	}
 
@@ -47,19 +58,8 @@ class TestRunner {
 
 }
 
-// to be extended by test cases in other files
-class TestCase {
-	runTests () {
-		Object.values(this).map(value => {
-			if (typeof value === 'function') {
-				value.call();
-			}
-		})
-	}
-}
 
 export default {
 	TestResult,
 	TestRunner,
-	TestCase,
 }

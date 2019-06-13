@@ -1,7 +1,6 @@
-import tokenUtils from "./../../tokens.js"
-import fw from "./testFramework.js"
+import tokenUtils from "./../../../tokens.js"
 
-class TokensTestCase extends fw.TestCase {
+export default class {
 
 	testSetTokens() {
 		var should = "setTokens should raise error when no arguments are passed";
@@ -17,9 +16,4 @@ class TokensTestCase extends fw.TestCase {
 		return new TestResult(should, expected, actual);
 	}
 
-}
-
-
-export default {
-	TokensTestCase,
 }

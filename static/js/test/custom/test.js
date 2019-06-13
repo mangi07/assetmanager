@@ -1,13 +1,13 @@
 "use strict";
 
-import testTokens from "./testTokens.js"
+import TokensTestCase from "./test/testTokens.js"
 import fw from "./testFramework.js"
 
 
 function run() {
-	var tests = [testTokens];
+	var tests = [TokensTestCase];
 	var runner = new fw.TestRunner(tests);
-	runner.runTests();
+	runner.runTestCases();
 	runner.displayResults();
 		
 }
