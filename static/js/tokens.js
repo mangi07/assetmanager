@@ -12,6 +12,7 @@ Documentation: https://github.com/davesque/django-rest-framework-simplejwt
 ************************************************************** */
 'use strict';
 
+
 const requester = axios.create({
   baseURL: '/api/v1/',
   //timeout: 1000,
