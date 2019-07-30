@@ -31,6 +31,9 @@ from ..custom_api_exceptions import BadRequestException
 # TODO: play around with https://github.com/miki725/django-rest-framework-bulk
 # and consider replacing some code with this
 
+class HTMLBase(TemplateView):
+    template_name = "html_base.html"
+
 class LoginView(TemplateView):
     template_name = "login.html"
 

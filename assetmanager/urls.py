@@ -37,6 +37,10 @@ urlpatterns = [
 
     path(api_root_path + 'token/', TokenObtainPairView.as_view(), name='token-obtain-pair'),
     path(api_root_path + 'token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
+
+    # ##########################################################
+    # trying out vue.js
+    path('base/', views.HTMLBase.as_view(), name='html_base'),
     
     
 ]
